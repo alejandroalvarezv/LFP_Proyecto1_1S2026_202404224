@@ -271,6 +271,30 @@ mainwindow.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\LenguajesProyecto1.dir\build.make CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.s
 .PHONY : mainwindow.cpp.s
 
+scanner.obj: scanner.cpp.obj
+.PHONY : scanner.obj
+
+# target to build an object file
+scanner.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LenguajesProyecto1.dir\build.make CMakeFiles/LenguajesProyecto1.dir/scanner.cpp.obj
+.PHONY : scanner.cpp.obj
+
+scanner.i: scanner.cpp.i
+.PHONY : scanner.i
+
+# target to preprocess a source file
+scanner.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LenguajesProyecto1.dir\build.make CMakeFiles/LenguajesProyecto1.dir/scanner.cpp.i
+.PHONY : scanner.cpp.i
+
+scanner.s: scanner.cpp.s
+.PHONY : scanner.s
+
+# target to generate assembly for a file
+scanner.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LenguajesProyecto1.dir\build.make CMakeFiles/LenguajesProyecto1.dir/scanner.cpp.s
+.PHONY : scanner.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -295,6 +319,9 @@ help:
 	@echo ... mainwindow.obj
 	@echo ... mainwindow.i
 	@echo ... mainwindow.s
+	@echo ... scanner.obj
+	@echo ... scanner.i
+	@echo ... scanner.s
 .PHONY : help
 
 

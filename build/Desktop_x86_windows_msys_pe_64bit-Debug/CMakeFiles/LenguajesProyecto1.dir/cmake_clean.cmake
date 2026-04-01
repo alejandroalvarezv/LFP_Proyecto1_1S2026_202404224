@@ -8,6 +8,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/LenguajesProyecto1.dir/main.cpp.obj.d"
   "CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.obj"
   "CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.obj.d"
+  "CMakeFiles/LenguajesProyecto1.dir/scanner.cpp.obj"
+  "CMakeFiles/LenguajesProyecto1.dir/scanner.cpp.obj.d"
   "LenguajesProyecto1.exe"
   "LenguajesProyecto1.exe.manifest"
   "LenguajesProyecto1.pdb"
