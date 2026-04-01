@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>240</x>
-      <y>200</y>
+      <y>140</y>
       <width>311</width>
       <height>161</height>
      </rect>
@@ -27,8 +27,8 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>450</y>
+      <x>70</x>
+      <y>220</y>
       <width>90</width>
       <height>29</height>
      </rect>
@@ -37,17 +37,121 @@
      <string>Analizar</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="btnEstaditicasG">
     <property name="geometry">
      <rect>
-      <x>560</x>
-      <y>450</y>
-      <width>90</width>
+      <x>620</x>
+      <y>360</y>
+      <width>151</width>
       <height>29</height>
      </rect>
     </property>
     <property name="text">
-     <string>Reportes</string>
+     <string>Estadisticas Generales</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnCargar">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>130</y>
+      <width>111</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Cargar Archivo</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bntLimpiar">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>270</y>
+      <width>121</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Limpiar Pantalla</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnReporteTokens">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>50</y>
+      <width>121</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reporte Tokens</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnReporteErrores">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>50</y>
+      <width>121</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reporte errores</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ReporteHistorialPacientes">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>390</y>
+      <width>191</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reporte Historial Pacientes</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnCargaMedicos">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>380</y>
+      <width>131</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Carga de Medicos</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnAgendaCitas">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>360</y>
+      <width>121</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Agenda de Citas</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnVerjerarquia">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>500</y>
+      <width>121</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ver Jerarquia</string>
     </property>
    </widget>
   </widget>

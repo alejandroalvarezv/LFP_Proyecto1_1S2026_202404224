@@ -383,6 +383,9 @@ CMakeFiles/LenguajesProyecto1.dir/main.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qcursor.h \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qbitmap.h \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/qtabwidget.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QList \
+ C:\Users\aleja\Documents\LenguajesProyecto1\scanner.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/QApplication \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/qapplication.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qcoreapplication.h \

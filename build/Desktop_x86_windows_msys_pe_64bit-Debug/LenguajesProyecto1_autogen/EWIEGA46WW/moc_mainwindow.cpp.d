@@ -1,5 +1,7 @@
 C:/Users/aleja/Documents/LenguajesProyecto1/build/Desktop_x86_windows_msys_pe_64bit-Debug/LenguajesProyecto1_autogen/EWIEGA46WW/moc_mainwindow.cpp: C:/Users/aleja/Documents/LenguajesProyecto1/mainwindow.h \
   C:/Users/aleja/Documents/LenguajesProyecto1/build/Desktop_x86_windows_msys_pe_64bit-Debug/LenguajesProyecto1_autogen/moc_predefs.h \
+  C:/Qt/6.11.0/mingw_64/include/QtCore/QList \
+  C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
   C:/Qt/6.11.0/mingw_64/include/QtCore/q17memory.h \
   C:/Qt/6.11.0/mingw_64/include/QtCore/q20bit.h \
   C:/Qt/6.11.0/mingw_64/include/QtCore/q20functional.h \
@@ -162,6 +164,7 @@ C:/Users/aleja/Documents/LenguajesProyecto1/build/Desktop_x86_windows_msys_pe_64
   C:/Qt/6.11.0/mingw_64/include/QtWidgets/qtwidgetsexports.h \
   C:/Qt/6.11.0/mingw_64/include/QtWidgets/qtwidgetsglobal.h \
   C:/Qt/6.11.0/mingw_64/include/QtWidgets/qwidget.h \
+  C:/Users/aleja/Documents/LenguajesProyecto1/scanner.h \
   C:/msys64/mingw64/include/_mingw.h \
   C:/msys64/mingw64/include/_mingw_mac.h \
   C:/msys64/mingw64/include/_mingw_off_t.h \

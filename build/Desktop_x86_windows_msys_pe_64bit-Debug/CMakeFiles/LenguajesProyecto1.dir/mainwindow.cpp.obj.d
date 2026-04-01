@@ -383,6 +383,9 @@ CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qcursor.h \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qbitmap.h \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/qtabwidget.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QList \
+ C:\Users\aleja\Documents\LenguajesProyecto1\scanner.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
  C:/Users/aleja/Documents/LenguajesProyecto1/build/Desktop_x86_windows_msys_pe_64bit-Debug/LenguajesProyecto1_autogen/include/ui_mainwindow.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/QVariant \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/QApplication \
@@ -440,7 +443,53 @@ CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/QStatusBar \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/qstatusbar.h \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/QWidget \
- C:\Users\aleja\Documents\LenguajesProyecto1\scanner.h \
- C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
- C:/Qt/6.11.0/mingw_64/include/QtCore/QList \
- C:/Qt/6.11.0/mingw_64/include/QtCore/QDebug
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QDebug \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QFile \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qfile.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qfiledevice.h \
+ C:/msys64/mingw64/include/c++/14.2.0/filesystem \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/fs_fwd.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/fs_path.h \
+ C:/msys64/mingw64/include/c++/14.2.0/locale \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/locale_facets.h \
+ C:/msys64/mingw64/include/c++/14.2.0/cwctype \
+ C:/msys64/mingw64/include/wctype.h \
+ C:/msys64/mingw64/include/c++/14.2.0/x86_64-w64-mingw32/bits/ctype_base.h \
+ C:/msys64/mingw64/include/c++/14.2.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/locale_facets.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/locale_facets_nonio.h \
+ C:/msys64/mingw64/include/c++/14.2.0/x86_64-w64-mingw32/bits/time_members.h \
+ C:/msys64/mingw64/include/c++/14.2.0/x86_64-w64-mingw32/bits/messages_members.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/codecvt.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/locale_facets_nonio.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/locale_conv.h \
+ C:/msys64/mingw64/include/c++/14.2.0/iomanip \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/quoted_string.h \
+ C:/msys64/mingw64/include/c++/14.2.0/sstream \
+ C:/msys64/mingw64/include/c++/14.2.0/istream \
+ C:/msys64/mingw64/include/c++/14.2.0/ios \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/basic_ios.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/basic_ios.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/ostream \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/ostream.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/istream.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/sstream.tcc \
+ C:/msys64/mingw64/include/c++/14.2.0/codecvt \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/fs_dir.h \
+ C:/msys64/mingw64/include/c++/14.2.0/bits/fs_ops.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QTextStream \
+ C:/Qt/6.11.0/mingw_64/include/QtGui/QDesktopServices \
+ C:/Qt/6.11.0/mingw_64/include/QtGui/qdesktopservices.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QUrl \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/QMessageBox \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/qmessagebox.h \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/qdialog.h \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/qdialogbuttonbox.h \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/QFileDialog \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/qfiledialog.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qdir.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qdirlisting.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qdatetime.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qcalendar.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qfileinfo.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/qtimezone.h

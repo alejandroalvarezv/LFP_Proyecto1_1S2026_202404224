@@ -384,6 +384,9 @@ CMakeFiles/LenguajesProyecto1.dir/LenguajesProyecto1_autogen/mocs_compilation.cp
  C:/Qt/6.11.0/mingw_64/include/QtGui/qcursor.h \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qbitmap.h \
  C:/Qt/6.11.0/mingw_64/include/QtWidgets/qtabwidget.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QList \
+ C:/Users/aleja/Documents/LenguajesProyecto1/scanner.h \
+ C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qtmochelpers.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qtmocconstants.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/q20algorithm.h
