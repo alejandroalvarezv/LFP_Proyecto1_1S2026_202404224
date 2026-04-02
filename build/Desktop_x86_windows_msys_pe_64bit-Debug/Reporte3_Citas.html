@@ -1,1 +1,17 @@
-<html><head><meta charset='UTF-8'><style>body { font-family: sans-serif; }table { width: 100%; border-collapse: collapse; }th { background-color: #1a3d2f; color: white; padding: 12px; border: 1px solid #ccc; }td { border: 1px solid #ccc; padding: 10px; text-align: center; }.confirmada { background-color: #27ae60; color: white; font-weight: bold; }.pendiente { background-color: #e67e22; color: white; font-weight: bold; }.conflicto-celda { background-color: #c0392b; color: white; font-weight: bold; }.conflicto-fila { background-color: #f9ebeb; }</style></head><body><h2>Ejemplo del formato esperado (la fila en rojo indica conflicto detectado):</h2><table><thead><tr><th>Fecha</th><th>Hora</th><th>Paciente</th><th>Médico</th><th>Especialidad</th><th>Estado</th></tr></thead><tbody><tr class=''><td>2025-04-10</td><td>09:00</td><td style='text-align:left;'>María García</td><td style='text-align:left;'>Dr. Roberto Juárez</td><td>CARDIOLOGIA</td><td class='confirmada'>CONFIRMADA</td></tr><tr class='conflicto-fila'><td>2025-04-10</td><td>09:00</td><td style='text-align:left;'>Pedro Castillo</td><td style='text-align:left;'>Dr. Mario Bros</td><td>CARDIOLOGIA</td><td class='conflicto-celda'>⚠ CONFLICTO</td></tr></tbody></table></body></html>
+
+<html><head><meta charset='UTF-8'><title>Agenda de Citas</title>
+<style>
+  body{font-family:sans-serif;background:#f4f7f6;padding:20px;}
+  h1{color:#1a3d2f;}
+  table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 5px rgba(0,0,0,.1);}
+  th{background:#1a3d2f;color:white;padding:12px;text-align:left;}
+  td{padding:10px;border-bottom:1px solid #ddd;}
+  .confirmada{background:#27ae60;color:white;font-weight:bold;border-radius:4px;padding:4px 8px;}
+  .conflicto{background:#c0392b;color:white;font-weight:bold;border-radius:4px;padding:4px 8px;}
+  .fila-conflicto{background:#fdecea;}
+</style></head><body>
+<h1>Reporte 3 — Agenda de Citas con Detección de Conflictos</h1>
+<table>
+<thead><tr><th>Fecha</th><th>Hora</th><th>Paciente</th><th>Médico</th><th>Especialidad</th><th>Estado</th></tr></thead>
+<tbody>
+</tbody></table></body></html>

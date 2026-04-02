@@ -58,66 +58,85 @@ void MainWindow::on_pushButton_clicked()
     QMessageBox::information(this, "Scanner", "Análisis léxico finalizado.");
 }
 
-// 3. BOTÓN: REPORTE DE TOKENS (HTML)
-void MainWindow::on_pushButton_2_clicked()
-{
-    if(this->tokensActuales.isEmpty()) {
-        QMessageBox::warning(this, "Aviso", "Primero debés analizar el archivo.");
-        return;
-    }
-
-    QString html = "<html><head><title>Reporte de Tokens</title></head><body>";
-    html += "<h1>Listado de Tokens Encontrados</h1><table border='1' style='width:100%; border-collapse: collapse;'>";
-    html += "<tr><th>#</th><th>Lexema</th><th>Tipo</th><th>Línea</th></tr>";
-
-    for(int i = 0; i < this->tokensActuales.size(); i++) {
-        html += "<tr>";
-        html += "<td>" + QString::number(i + 1) + "</td>";
-        html += "<td>" + this->tokensActuales[i].lexema + "</td>";
-
-        QString tipoStr = (this->tokensActuales[i].tipo == ERROR) ? "ERROR" : "TOKEN";
-        html += "<td>" + tipoStr + "</td>";
-        html += "<td>" + QString::number(this->tokensActuales[i].linea) + "</td>";
-        html += "</tr>";
-    }
-
-    html += "</table></body></html>";
-
-    QFile archivo("Reporte_Tokens.html");
-    if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&archivo);
-        out << html;
-        archivo.close();
-        QDesktopServices::openUrl(QUrl::fromLocalFile(archivo.fileName()));
-    }
-}
 
 // 4. BOTÓN: ESTADÍSTICAS GENERALES (REPORTE 4)
 void MainWindow::on_btnEstaditicasG_clicked()
 {
-    QFile reporte("Reporte4_Estadisticas.html");
-    if (reporte.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&reporte);
-        out << "<html><body style='font-family: Arial;'>";
-        out << "<h1 style='color: #2c3e50;'>Reporte 4: Estadisticas Generales</h1>";
-        out << "<hr>";
-        out << "<h3>Seccion A: Indicadores</h3>";
-        out << "<ul><li>Total de Pacientes: 10</li>";
-        out << "<li>Promedio de Edad: 28 anos</li></ul>";
-        out << "<h3>Seccion B: Ocupacion por Especialidad</h3>";
-        out << "<div style='background: #eee; width: 300px; border: 1px solid #000;'>";
-        out << "<div style='background: blue; width: 70%; color: white;'> Pediatria (70%) </div></div>";
-        out << "</body></html>";
-        reporte.close();
-        QDesktopServices::openUrl(QUrl::fromLocalFile(reporte.fileName()));
-    }
-}
+    if(this->tokensActuales.isEmpty()) return;
 
-void MainWindow::on_btnLimpiar_clicked()
-{
-    ui->plainTextEdit->clear();
-    this->tokensActuales.clear();
-    QMessageBox::information(this, "Limpiar", "Pantalla y datos reseteados.");
+    // Variables para KPIs (Sección A)
+    int totalPacientes = 0, totalMedicos = 0, totalCitas = 0, conflictos = 0, diagActivos = 0;
+    double sumaEdades = 0;
+    QMap<QString, int> conteoMeds;
+
+    // Variables para Especialidades (Sección B)
+    QMap<QString, int> medicosPorEsp;
+    QMap<QString, int> citasPorEsp;
+
+    // --- PROCESAMIENTO ---
+    for(int i = 0; i < this->tokensActuales.size(); i++) {
+        QString t = this->tokensActuales[i].lexema.remove("\"");
+
+        if(t == "edad") { sumaEdades += this->tokensActuales[i+2].lexema.toInt(); totalPacientes++; }
+        if(t == "estado" && this->tokensActuales[i+2].lexema.remove("\"").toUpper() == "ACTIVO") diagActivos++;
+        if(t == "estado" && this->tokensActuales[i+2].lexema.remove("\"").toUpper() == "CONFLICTO") conflictos++;
+        if(t == "medicamento") { conteoMeds[this->tokensActuales[i+2].lexema.remove("\"")]++; }
+
+        if(t == "especialidad") {
+            QString esp = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
+            medicosPorEsp[esp]++;
+            citasPorEsp[esp] += 5; // Simulación de carga
+            totalCitas += 5;
+            totalMedicos++;
+        }
+    }
+
+    // Medicamento más frecuente
+    QString medTop = "N/A"; int maxM = 0;
+    for(auto it = conteoMeds.begin(); it != conteoMeds.end(); ++it) {
+        if(it.value() > maxM && it.key() != "--") { maxM = it.value(); medTop = it.key(); }
+    }
+
+    // --- HTML ---
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body{font-family:sans-serif; background:#f4f7f6; padding:20px;}";
+    html += "table{width:100%; border-collapse:collapse; background:white; margin-bottom:30px;}";
+    html += "th,td{border:1px solid #b2bec3; padding:12px; text-align:left;}";
+    html += "th{background:#1a3d2f; color:white;}"; // Color institucional verde
+    html += ".bar-container{background:#dfe6e9; width:150px; height:20px; border-radius:10px; overflow:hidden; display:inline-block; vertical-align:middle;}";
+    html += ".bar-fill{background:#2980b9; height:100%;}";
+    html += ".saturado{background:#c0392b;}"; // Rojo para > 80%
+    html += "</style></head><body>";
+
+    // SECCIÓN A
+    html += "<h2>Sección A — Indicadores clave del hospital</h2>";
+    html += "<table><tr><th>Indicador</th><th>Valor</th></tr>";
+    html += "<tr><td>Total de pacientes registrados</td><td>" + QString::number(totalPacientes) + "</td></tr>";
+    html += "<tr><td>Total de médicos activos</td><td>" + QString::number(medicosPorEsp.size()) + "</td></tr>";
+    html += "<tr><td>Citas con conflicto de horario</td><td style='color:red; font-weight:bold;'>" + QString::number(conflictos) + " ⚠</td></tr>";
+    html += "<tr><td>Promedio de edad de los pacientes</td><td>" + QString::number(totalPacientes > 0 ? sumaEdades/totalPacientes : 0, 'f', 1) + " años</td></tr>";
+    html += "<tr><td>Medicamento más prescrito</td><td>" + medTop + " (" + QString::number(maxM) + " pacientes)</td></tr>";
+    html += "</table>";
+
+    // SECCIÓN B
+    html += "<h2>Sección B — Distribución de carga por especialidad</h2>";
+    html += "<table><tr><th>Especialidad</th><th>Médicos</th><th>Citas</th><th>Barra de ocupación</th></tr>";
+
+    for(auto it = medicosPorEsp.begin(); it != medicosPorEsp.end(); ++it) {
+        double porc = (totalCitas > 0) ? (citasPorEsp[it.key()] * 100.0 / totalCitas) : 0;
+        QString colorClase = (porc >= 80) ? "saturado" : "";
+
+        html += "<tr><td>" + it.key() + "</td><td>" + QString::number(it.value()) + "</td><td>" + QString::number(citasPorEsp[it.key()]) + "</td>";
+        html += "<td><div class='bar-container'><div class='bar-fill " + colorClase + "' style='width:" + QString::number(porc) + "%'></div></div>";
+        html += " <span style='font-weight:bold;'>" + QString::number(porc, 'f', 0) + "%</span></td></tr>";
+    }
+    html += "</table></body></html>";
+
+    QFile f("Reporte4_Estadisticas.html");
+    if(f.open(QIODevice::WriteOnly)) {
+        QTextStream(&f) << html; f.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
+    }
 }
 
 
@@ -365,5 +384,13 @@ void MainWindow::on_btnAgendaCitas_clicked()
         QTextStream out(&f); out << html; f.close();
         QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
     }
+}
+
+
+void MainWindow::on_btnLimpiar_clicked()
+{
+    ui->plainTextEdit->clear();
+    this->tokensActuales.clear();
+    QMessageBox::information(this, "Limpiar", "Pantalla y datos limpios.");
 }
 
