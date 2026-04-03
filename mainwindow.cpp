@@ -31,7 +31,6 @@ void MainWindow::on_btnCargar_clicked()
         QFile archivo(nombre);
         if (archivo.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QTextStream in(&archivo);
-            // Usamos plainTextEdit que es el nombre por defecto de tu cuadro gris
             ui->plainTextEdit->setPlainText(in.readAll());
             archivo.close();
             QMessageBox::information(this, "Éxito", "Archivo cargado correctamente.");
@@ -62,79 +61,164 @@ void MainWindow::on_pushButton_clicked()
 // 4. BOTÓN: ESTADÍSTICAS GENERALES (REPORTE 4)
 void MainWindow::on_btnEstaditicasG_clicked()
 {
-    if(this->tokensActuales.isEmpty()) return;
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
+        return;
+    }
 
-    // Variables para KPIs (Sección A)
-    int totalPacientes = 0, totalMedicos = 0, totalCitas = 0, conflictos = 0, diagActivos = 0;
+    struct CitaAux {
+        QString medico, fecha, hora;
+    };
+    struct DatosEsp {
+        int numMedicos = 0;
+        int numCitas = 0;
+        QSet<QString> pacientesUnicos;
+    };
+
+    QString nombreHospital = "Hospital General";
+    int totalPacientes = 0, totalMedicos = 0, totalCitas = 0, conflictos = 0;
     double sumaEdades = 0;
-    QMap<QString, int> conteoMeds;
+    QSet<QString> pacientesConDiag;
+    QMap<QString, int> conteoMedicamentos;
+    QMap<QString, int> citasPorMedico;
+    QMap<QString, QString> especialidadDeMedico;
+    QList<CitaAux> listaParaConflictos;
+    QMap<QString, DatosEsp> statsPorEspecialidad;
 
-    // Variables para Especialidades (Sección B)
-    QMap<QString, int> medicosPorEsp;
-    QMap<QString, int> citasPorEsp;
+    bool enPac = false, enMed = false, enCit = false, enDiag = false;
 
-    // --- PROCESAMIENTO ---
-    for(int i = 0; i < this->tokensActuales.size(); i++) {
-        QString t = this->tokensActuales[i].lexema.remove("\"");
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
 
-        if(t == "edad") { sumaEdades += this->tokensActuales[i+2].lexema.toInt(); totalPacientes++; }
-        if(t == "estado" && this->tokensActuales[i+2].lexema.remove("\"").toUpper() == "ACTIVO") diagActivos++;
-        if(t == "estado" && this->tokensActuales[i+2].lexema.remove("\"").toUpper() == "CONFLICTO") conflictos++;
-        if(t == "medicamento") { conteoMeds[this->tokensActuales[i+2].lexema.remove("\"")]++; }
+        if(val == "hospital" && (i + 1) < tokensActuales.size()) {
+            if(tokensActuales[i+1].lexema != "{") {
+                nombreHospital = tokensActuales[i+1].lexema.remove("\"");
+            }
+        }
 
-        if(t == "especialidad") {
-            QString esp = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
-            medicosPorEsp[esp]++;
-            citasPorEsp[esp] += 5; // Simulación de carga
-            totalCitas += 5;
+        if(val == "pacientes") { enPac = true; continue; }
+        if(val == "medicos") { enMed = true; continue; }
+        if(val == "citas") { enCit = true; continue; }
+        if(val == "diagnosticos") { enDiag = true; continue; }
+
+        if(enPac && val == "paciente") {
+            totalPacientes++;
+            for(int j = i; j < i+10 && j < tokensActuales.size(); j++) {
+                if(tokensActuales[j].lexema.toLower() == "edad") {
+                    sumaEdades += tokensActuales[j+2].lexema.toInt();
+                }
+            }
+        }
+        else if(enMed && val == "medico") {
             totalMedicos++;
+            QString nombre = tokensActuales[i+2].lexema.remove("\"");
+            QString esp = "GENERAL";
+            for(int j = i; j < i+15 && j < tokensActuales.size(); j++) {
+                if(tokensActuales[j].lexema.toLower() == "especialidad") {
+                    esp = tokensActuales[j+2].lexema.remove("\"");
+                }
+            }
+            especialidadDeMedico[nombre] = esp;
+            statsPorEspecialidad[esp].numMedicos++;
+        }
+
+        else if(enCit && val == "cita") {
+            totalCitas++;
+            QString pac = tokensActuales[i+2].lexema.remove("\"");
+            QString med = tokensActuales[i+4].lexema.remove("\"");
+            QString f, h;
+            for(int j = i; j < i+15 && j < tokensActuales.size(); j++) {
+                if(tokensActuales[j].lexema.toLower() == "fecha") f = tokensActuales[j+2].lexema.remove("\"");
+                if(tokensActuales[j].lexema.toLower() == "hora") h = tokensActuales[j+2].lexema.remove("\"");
+            }
+
+            citasPorMedico[med]++;
+            QString esp = especialidadDeMedico.value(med, "GENERAL");
+            statsPorEspecialidad[esp].numCitas++;
+            statsPorEspecialidad[esp].pacientesUnicos.insert(pac);
+
+            for(const auto &existente : listaParaConflictos) {
+                if(existente.medico == med && existente.fecha == f && existente.hora == h) {
+                    conflictos++;
+                    break;
+                }
+            }
+            listaParaConflictos.append({med, f, h});
+        }
+        else if(enDiag && val == "diagnostico") {
+            QString pac = tokensActuales[i+2].lexema.remove("\"");
+            pacientesConDiag.insert(pac);
+            for(int j = i; j < i+15 && j < tokensActuales.size(); j++) {
+                if(tokensActuales[j].lexema.toLower() == "medicamento") {
+                    conteoMedicamentos[tokensActuales[j+2].lexema.remove("\"")]++;
+                }
+            }
+        }
+
+        if(tokensActuales[i].lexema == "}") { enPac=enMed=enCit=enDiag=false; }
+    }
+
+    double promedioEdad = (totalPacientes > 0) ? ((double)sumaEdades / totalPacientes) : 0;
+    int pacActivos = pacientesConDiag.size();
+    double porcActivos = (totalPacientes > 0) ? ((double)pacActivos / totalPacientes) * 100 : 0;
+
+    QString medTop = "N/A"; int maxMed = 0;
+    for(auto it = conteoMedicamentos.begin(); it != conteoMedicamentos.end(); ++it) {
+        if(it.value() > maxMed) { maxMed = it.value(); medTop = it.key(); }
+    }
+
+    QString medCarga = "N/A", espCarga = "N/A"; int maxCitas = 0;
+    for(auto it = citasPorMedico.begin(); it != citasPorMedico.end(); ++it) {
+        if(it.value() > maxCitas) {
+            maxCitas = it.value();
+            medCarga = it.key();
+            espCarga = especialidadDeMedico.value(medCarga);
         }
     }
 
-    // Medicamento más frecuente
-    QString medTop = "N/A"; int maxM = 0;
-    for(auto it = conteoMeds.begin(); it != conteoMeds.end(); ++it) {
-        if(it.value() > maxM && it.key() != "--") { maxM = it.value(); medTop = it.key(); }
-    }
-
-    // --- HTML ---
     QString html = "<html><head><meta charset='UTF-8'><style>";
-    html += "body{font-family:sans-serif; background:#f4f7f6; padding:20px;}";
-    html += "table{width:100%; border-collapse:collapse; background:white; margin-bottom:30px;}";
-    html += "th,td{border:1px solid #b2bec3; padding:12px; text-align:left;}";
-    html += "th{background:#1a3d2f; color:white;}"; // Color institucional verde
-    html += ".bar-container{background:#dfe6e9; width:150px; height:20px; border-radius:10px; overflow:hidden; display:inline-block; vertical-align:middle;}";
-    html += ".bar-fill{background:#2980b9; height:100%;}";
-    html += ".saturado{background:#c0392b;}"; // Rojo para > 80%
+    html += "body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 30px; }";
+    html += "h2 { color: #1e3d33; border-bottom: 2px solid #1e3d33; padding-bottom: 10px; }";
+    html += "table { width: 100%; border-collapse: collapse; margin-bottom: 40px; background: white; }";
+    html += "th { background-color: #d1d9e6; color: #444; padding: 12px; text-align: left; border: 1px solid #b8c5d6; }";
+    html += "td { padding: 12px; border: 1px solid #b8c5d6; }";
+    html += ".val { font-weight: bold; color: #2c3e50; }";
+    html += ".err { color: #c62828; font-weight: bold; }";
+    html += ".bar-bg { width: 150px; background: #e0e0e0; height: 18px; border: 1px solid #ccc; display: inline-block; margin-right: 10px; vertical-align: middle; }";
+    html += ".bar-fill { height: 100%; }";
     html += "</style></head><body>";
 
-    // SECCIÓN A
-    html += "<h2>Sección A — Indicadores clave del hospital</h2>";
+    html += "<h2>Sección A: Indicadores Clave</h2>";
     html += "<table><tr><th>Indicador</th><th>Valor</th></tr>";
-    html += "<tr><td>Total de pacientes registrados</td><td>" + QString::number(totalPacientes) + "</td></tr>";
-    html += "<tr><td>Total de médicos activos</td><td>" + QString::number(medicosPorEsp.size()) + "</td></tr>";
-    html += "<tr><td>Citas con conflicto de horario</td><td style='color:red; font-weight:bold;'>" + QString::number(conflictos) + " ⚠</td></tr>";
-    html += "<tr><td>Promedio de edad de los pacientes</td><td>" + QString::number(totalPacientes > 0 ? sumaEdades/totalPacientes : 0, 'f', 1) + " años</td></tr>";
-    html += "<tr><td>Medicamento más prescrito</td><td>" + medTop + " (" + QString::number(maxM) + " pacientes)</td></tr>";
-    html += "</table>";
+    html += "<tr><td>Nombre del hospital</td><td class='val'>" + nombreHospital + "</td></tr>";
+    html += "<tr><td>Total de pacientes registrados</td><td class='val'>" + QString::number(totalPacientes) + "</td></tr>";
+    html += "<tr><td>Total de médicos activos</td><td class='val'>" + QString::number(totalMedicos) + "</td></tr>";
+    html += "<tr><td>Total de citas programadas</td><td class='val'>" + QString::number(totalCitas) + "</td></tr>";
+    html += "<tr><td>Citas con conflicto de horario</td><td class='err'>" + QString::number(conflictos) + " </td></tr>";
+    html += "<tr><td>Pacientes con diagnóstico activo</td><td class='val'>" + QString::number(pacActivos) + " de " + QString::number(totalPacientes) + " (" + QString::number(porcActivos, 'f', 1) + "%)</td></tr>";
+    html += "<tr><td>Medicamento más prescrito</td><td class='val'>" + medTop + " (" + QString::number(maxMed) + " pacientes)</td></tr>";
+    html += "<tr><td>Especialidad con mayor carga</td><td class='val'>" + espCarga + " — " + medCarga + " (" + QString::number(maxCitas) + " citas)</td></tr>";
+    html += "<tr><td>Promedio de edad de los pacientes</td><td class='val'>" + QString::number(promedioEdad, 'f', 1) + " años</td></tr></table>";
 
-    // SECCIÓN B
-    html += "<h2>Sección B — Distribución de carga por especialidad</h2>";
-    html += "<table><tr><th>Especialidad</th><th>Médicos</th><th>Citas</th><th>Barra de ocupación</th></tr>";
+    html += "<h2>Sección B: Distribución por Especialidad</h2>";
+    html += "<table><thead><tr><th>Especialidad</th><th>Médicos</th><th>Citas</th><th>Pacientes</th><th>Barra de ocupación</th></tr></thead><tbody>";
 
-    for(auto it = medicosPorEsp.begin(); it != medicosPorEsp.end(); ++it) {
-        double porc = (totalCitas > 0) ? (citasPorEsp[it.key()] * 100.0 / totalCitas) : 0;
-        QString colorClase = (porc >= 80) ? "saturado" : "";
-
-        html += "<tr><td>" + it.key() + "</td><td>" + QString::number(it.value()) + "</td><td>" + QString::number(citasPorEsp[it.key()]) + "</td>";
-        html += "<td><div class='bar-container'><div class='bar-fill " + colorClase + "' style='width:" + QString::number(porc) + "%'></div></div>";
-        html += " <span style='font-weight:bold;'>" + QString::number(porc, 'f', 0) + "%</span></td></tr>";
+    for(auto it = statsPorEspecialidad.begin(); it != statsPorEspecialidad.end(); ++it) {
+        double porc = (totalCitas > 0) ? ((double)it.value().numCitas / totalCitas) * 100 : 0;
+        QString color = (porc > 80) ? "#c62828" : "#1a4e7a";
+        html += "<tr><td><b>" + it.key() + "</b></td>";
+        html += "<td>" + QString::number(it.value().numMedicos) + "</td>";
+        html += "<td>" + QString::number(it.value().numCitas) + "</td>";
+        html += "<td>" + QString::number(it.value().pacientesUnicos.size()) + "</td>";
+        html += "<td><div class='bar-bg'><div class='bar-fill' style='width:"+QString::number(porc)+"%; background:"+color+";'></div></div>";
+        html += "<span style='font-weight:bold; color:"+color+";'>" + QString::number(porc, 'f', 0) + "%</span></td></tr>";
     }
-    html += "</table></body></html>";
 
-    QFile f("Reporte4_Estadisticas.html");
-    if(f.open(QIODevice::WriteOnly)) {
-        QTextStream(&f) << html; f.close();
+    html += "</tbody></table></body></html>";
+
+    QFile f("Reporte4_Estadistico.html");
+    if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&f); out << html; f.close();
         QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
     }
 }
@@ -178,135 +262,188 @@ void MainWindow::on_btnReporteTokens_clicked()
 
 void MainWindow::on_ReporteHistorialPacientes_clicked()
 {
-    {
-        if(this->tokensActuales.isEmpty()) {
-            QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
-            return;
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
+        return;
+    }
+
+    struct InfoDiag { QString cond, med, dos; };
+    QMap<QString, InfoDiag> mapaDiagnosticos;
+    QMap<QString, int> contadorDiags;
+
+    bool enDiag = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "diagnosticos") enDiag = true;
+
+        if(enDiag && val == "diagnostico") {
+            QString pac = tokensActuales[i+2].lexema.remove("\"");
+
+            contadorDiags[pac]++;
+
+            InfoDiag d;
+            for(int j = i; j < i + 25 && j < tokensActuales.size(); j++) {
+                QString k = tokensActuales[j].lexema.remove("\"").toLower();
+                if(k == "condicion") d.cond = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "medicamento") d.med = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "dosis") d.dos = tokensActuales[j+2].lexema.remove("\"");
+            }
+            mapaDiagnosticos[pac] = d;
         }
+        if(enDiag && tokensActuales[i].lexema == "}") enDiag = false;
+    }
 
-        QString html = "<html><head><meta charset='UTF-8'><style>";
-        html += "body { font-family: sans-serif; }";
-        html += "table { width: 100%; border-collapse: collapse; }";
-        html += "th { background-color: #1a3d2f; color: white; padding: 12px; }"; // Verde oscuro
-        html += "td { border: 1px solid #ccc; padding: 10px; }";
-        html += ".activo { background-color: #27ae60; color: white; font-weight: bold; text-align: center; }";
-        html += ".sindiag { background-color: #e67e22; color: white; font-weight: bold; text-align: center; }";
-        html += ".critico { background-color: #c0392b; color: white; font-weight: bold; text-align: center; }";
-        html += "</style></head><body>";
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; }";
+    html += "th { background-color: #2c3e50; color: white; padding: 12px; text-align: left; }";
+    html += "td { border: 1px solid #ddd; padding: 10px; }";
+    html += ".status { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; display: inline-block; }";
+    html += ".activo { background-color: #27ae60; }";   // Verde
+    html += ".sindiag { background-color: #e67e22; }";  // Naranja
+    html += ".critico { background-color: #c0392b; }";  // Rojo
+    html += "</style></head><body><h1>Reporte 1: Historial de Pacientes</h1>";
+    html += "<table><thead><tr><th>Paciente</th><th>Edad</th><th>Sangre</th><th>Habitación</th><th>Diagnóstico</th><th>Medicamento</th><th>Estado</th></tr></thead><tbody>";
 
-        html += "<h1>Reporte 1: Historial de Pacientes</h1>";
-        html += "<table><thead><tr><th>Paciente</th><th>Edad</th><th>Sangre</th><th>Diagnóstico activo</th><th>Medicamento / Dosis</th><th>Estado</th></tr></thead><tbody>";
+    bool enPac = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "pacientes") enPac = true;
 
-        bool seccionPacientes = false;
+        if(enPac && val == "paciente") {
+            QString nom = tokensActuales[i+2].lexema.remove("\"");
+            QString ed = "N/A", san = "N/A", hab = "N/A";
 
-        for(int i = 0; i < this->tokensActuales.size(); i++) {
-            QString valor = this->tokensActuales[i].lexema.remove("\"");
+            for(int j = i; j < i + 15 && j < tokensActuales.size(); j++) {
+                QString k = tokensActuales[j].lexema.remove("\"").toLower();
+                if(k == "edad") ed = tokensActuales[j+2].lexema;
+                if(k == "tipo_sangre") san = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "habitacion") hab = tokensActuales[j+2].lexema;
+            }
 
-            if(valor == "Pacientes") { seccionPacientes = true; continue; }
-            if(valor == "]" && seccionPacientes) { seccionPacientes = false; break; }
+            QString diag = "Sin registro", med = "N/A", est = "SIN DIAG.", clase = "sindiag";
 
-            if(seccionPacientes && valor == "id") {
-                QString nom = "", ed = "", san = "", diag = "", med = "", est = "";
+            if(mapaDiagnosticos.contains(nom)) {
+                diag = mapaDiagnosticos[nom].cond;
+                med = mapaDiagnosticos[nom].med + " (" + mapaDiagnosticos[nom].dos + ")";
 
-                for(int j = i; j < i + 25 && j < this->tokensActuales.size(); j++) {
-                    QString k = this->tokensActuales[j].lexema.remove("\"");
-                    if(k == "nombre") nom = this->tokensActuales[j+2].lexema.remove("\"");
-                    if(k == "edad")   ed  = this->tokensActuales[j+2].lexema;
-                    if(k == "sangre") san = this->tokensActuales[j+2].lexema.remove("\"");
-                    if(k == "diagnostico") diag = this->tokensActuales[j+2].lexema.remove("\"");
-                    if(k == "medicamento") med  = this->tokensActuales[j+2].lexema.remove("\"");
-                    if(k == "estado") est = this->tokensActuales[j+2].lexema.remove("\"").toUpper();
-                }
+                bool marcadoUrgente = diag.toUpper().contains("URGENTE");
+                bool multiplesDiags = (contadorDiags[nom] > 1);
 
-                if(!nom.isEmpty()) {
-                    html += "<tr>";
-                    html += "<td>" + nom + "</td><td>" + ed + "</td><td>" + san + "</td><td>" + diag + "</td><td>" + med + "</td>";
-
-                    QString clase = "";
-                    if(est == "ACTIVO") clase = "activo";
-                    else if(est == "CRITICO") clase = "critico";
-                    else clase = "sindiag";
-
-                    html += "<td class='" + clase + "'>" + est + "</td></tr>";
-                    i += 15;
+                if(marcadoUrgente || multiplesDiags) {
+                    est = "CRÍTICO";
+                    clase = "critico";
+                } else {
+                    est = "ACTIVO";
+                    clase = "activo";
                 }
             }
-        }
 
-        html += "</tbody></table></body></html>";
-
-        QFile f("Reporte1_Historial.html");
-        if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&f);
-            out << html;
-            f.close();
-            QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
+            html += "<tr><td>" + nom + "</td><td>" + ed + "</td><td>" + san + "</td><td>" + hab + "</td>";
+            html += "<td>" + diag + "</td><td>" + med + "</td>";
+            html += "<td><span class='status " + clase + "'>" + est + "</span></td></tr>";
         }
+        if(enPac && tokensActuales[i].lexema == "}") enPac = false;
+    }
+
+    html += "</tbody></table></body></html>";
+
+    QFile f("Reporte1_Historial.html");
+    if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&f); out << html; f.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
     }
 }
 
-
 void MainWindow::on_btnCargaMedicos_clicked()
 {
-    if(this->tokensActuales.isEmpty()) return;
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
+        return;
+    }
 
-    QString html = "<html><head><meta charset='UTF-8'><style>";
-    html += "body { font-family: sans-serif; }";
-    html += "table { width: 100%; border-collapse: collapse; }";
-    html += "th { background-color: #1a3d2f; color: white; padding: 12px; }";
-    html += "td { border: 1px solid #ccc; padding: 10px; text-align: center; }";
-    html += ".normal { background-color: #27ae60; color: white; font-weight: bold; }";
-    html += ".alta { background-color: #e67e22; color: white; font-weight: bold; }";
-    html += ".baja { background-color: #2980b9; color: white; font-weight: bold; }";
-    html += ".saturada { background-color: #c0392b; color: white; font-weight: bold; }";
-    html += "</style></head><body>";
+    struct EstadisticasMedico {
+        QString nombre;
+        QString codigo;
+        QString especialidad;
+        int totalCitas = 0;
+        QSet<QString> pacientesUnicos;
+    };
+    QMap<QString, EstadisticasMedico> mapaCarga;
 
-    html += "<h2>Ejemplo del formato esperado:</h2>";
-    html += "<table><thead><tr>";
-    html += "<th>Médico</th><th>Código</th><th>Especialidad</th>";
-    html += "<th>Citas Prog.</th><th>Pacientes</th><th>Nivel de Carga</th>";
-    html += "</tr></thead><tbody>";
+    bool enMed = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "medicos") enMed = true;
+        if(enMed && val == "medico") {
+            QString nombreMed = tokensActuales[i+2].lexema.remove("\"");
+            QString cod = "N/A", esp = "N/A";
 
-    bool enMedicos = false;
-    QString nom, cod, esp, citas, pac, nivel;
+            for(int j = i; j < i + 15 && j < tokensActuales.size(); j++) {
+                QString k = tokensActuales[j].lexema.remove("\"").toLower();
+                if(k == "codigo") cod = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "especialidad") esp = tokensActuales[j+2].lexema.remove("\"");
+            }
+            mapaCarga[nombreMed].nombre = nombreMed;
+            mapaCarga[nombreMed].codigo = cod;
+            mapaCarga[nombreMed].especialidad = esp;
+        }
+        if(enMed && tokensActuales[i].lexema == "}") enMed = false;
+    }
 
-    for(int i = 0; i < this->tokensActuales.size(); i++) {
-        QString t = this->tokensActuales[i].lexema.remove("\"");
+    bool enCitas = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "citas") enCitas = true;
+        if(enCitas && val == "cita") {
+            QString pacNom = tokensActuales[i+2].lexema.remove("\"");
+            QString medNom = "";
+            if(tokensActuales[i+3].lexema.toLower() == "con") {
+                medNom = tokensActuales[i+4].lexema.remove("\"");
+            }
 
-        if(t == "Medicos") { enMedicos = true; continue; }
-        if(t == "]" && enMedicos) { enMedicos = false; break; }
-
-        if(enMedicos) {
-            if(t == "nombre")       nom   = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "codigo")       cod   = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "especialidad") esp   = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
-            if(t == "citas")        citas = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "pacientes")    pac   = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "nivel")        nivel = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
-
-            if(t == "}") {
-                if(!nom.isEmpty()) {
-                    QString clase = "normal";
-                    if(nivel == "ALTA") clase = "alta";
-                    else if(nivel == "BAJA") clase = "baja";
-                    else if(nivel == "SATURADA") clase = "saturada";
-
-                    html += "<tr>";
-                    html += "<td style='text-align:left; font-weight:bold;'>" + nom + "</td>";
-                    html += "<td>" + cod + "</td>";
-                    html += "<td>" + esp + "</td>";
-                    html += "<td>" + citas + "</td>";
-                    html += "<td>" + pac + "</td>";
-                    html += "<td class='" + clase + "'>" + nivel + "</td>";
-                    html += "</tr>";
-                }
-                nom=cod=esp=citas=pac=nivel="";
+            if(mapaCarga.contains(medNom)) {
+                mapaCarga[medNom].totalCitas++;
+                mapaCarga[medNom].pacientesUnicos.insert(pacNom);
             }
         }
+        if(enCitas && tokensActuales[i].lexema == "}") enCitas = false;
     }
-    html += "</table></body></html>";
 
-    QFile f("Reporte2_Medicos.html");
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; }";
+    html += "th { background-color: #1e3d33; color: white; padding: 12px; text-align: left; border: 1px solid #ccc; }"; // Color verde oscuro similar a la imagen
+    html += "td { border: 1px solid #ddd; padding: 10px; }";
+    html += ".carga { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; text-align: center; display: block; }";
+    html += ".baja { background-color: #1a4e7a; } .normal { background-color: #2e7d32; }";
+    html += ".alta { background-color: #ef6c00; } .saturada { background-color: #c62828; }";
+    html += "</style></head><body><h1>Reporte 2: Carga de Médicos</h1>";
+
+    html += "<table><thead><tr><th>Médico</th><th>Código</th><th>Especialidad</th><th>Citas Prog.</th><th>Pacientes</th><th>Nivel de Carga</th></tr></thead><tbody>";
+
+    for(auto it = mapaCarga.begin(); it != mapaCarga.end(); ++it) {
+        EstadisticasMedico m = it.value();
+        int citas = m.totalCitas;
+
+        QString nivel = "BAJA", clase = "baja";
+        if(citas >= 4 && citas <= 6) { nivel = "NORMAL"; clase = "normal"; }
+        else if(citas >= 7 && citas <= 8) { nivel = "ALTA"; clase = "alta"; }
+        else if(citas >= 9) { nivel = "SATURADA"; clase = "saturada"; }
+
+        html += "<tr>";
+        html += "<td><b>" + m.nombre + "</b></td>";
+        html += "<td>" + m.codigo + "</td>"; // Columna de código independiente
+        html += "<td>" + m.especialidad + "</td>";
+        html += "<td>" + QString::number(citas) + "</td>";
+        html += "<td>" + QString::number(m.pacientesUnicos.size()) + "</td>";
+        html += "<td><span class='carga " + clase + "'>" + nivel + "</span></td>";
+        html += "</tr>";
+    }
+
+    html += "</tbody></table></body></html>";
+
+    QFile f("Reporte2_CargaMedicos.html");
     if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&f); out << html; f.close();
         QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
@@ -314,72 +451,98 @@ void MainWindow::on_btnCargaMedicos_clicked()
 }
 
 
+
 void MainWindow::on_btnAgendaCitas_clicked()
 {
-    if(this->tokensActuales.isEmpty()) return;
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
+        return;
+    }
 
-    QString html = "<html><head><meta charset='UTF-8'><style>";
-    html += "body { font-family: sans-serif; }";
-    html += "table { width: 100%; border-collapse: collapse; }";
-    html += "th { background-color: #1a3d2f; color: white; padding: 12px; border: 1px solid #ccc; }";
-    html += "td { border: 1px solid #ccc; padding: 10px; text-align: center; }";
-    // Colores de la imagen 6
-    html += ".confirmada { background-color: #27ae60; color: white; font-weight: bold; }";
-    html += ".pendiente { background-color: #e67e22; color: white; font-weight: bold; }";
-    html += ".conflicto-celda { background-color: #c0392b; color: white; font-weight: bold; }";
-    html += ".conflicto-fila { background-color: #f9ebeb; }";
-    html += "</style></head><body>";
-
-    html += "<h2>Ejemplo del formato esperado (la fila en rojo indica conflicto detectado):</h2>";
-    html += "<table><thead><tr>";
-    html += "<th>Fecha</th><th>Hora</th><th>Paciente</th><th>Médico</th><th>Especialidad</th><th>Estado</th>";
-    html += "</tr></thead><tbody>";
-
-    bool enCitas = false;
-    QString fec, hor, pac, med, esp, est;
-
-    for(int i = 0; i < this->tokensActuales.size(); i++) {
-        QString t = this->tokensActuales[i].lexema.remove("\"");
-
-        if(t == "Citas") { enCitas = true; continue; }
-        if(t == "]" && enCitas) { enCitas = false; break; }
-
-        if(enCitas) {
-            if(t == "fecha")        fec = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "hora")         hor = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "paciente")     pac = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "medico")       med = this->tokensActuales[i+2].lexema.remove("\"");
-            if(t == "especialidad") esp = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
-            if(t == "estado")       est = this->tokensActuales[i+2].lexema.remove("\"").toUpper();
-
-            if(t == "}") {
-                if(!pac.isEmpty()) {
-                    QString claseCelda = "confirmada";
-                    QString claseFila = "";
-
-                    if(est == "PENDIENTE") claseCelda = "pendiente";
-                    else if(est == "CONFLICTO") {
-                        claseCelda = "conflicto-celda";
-                        claseFila = "conflicto-fila";
-                    }
-
-                    html += "<tr class='" + claseFila + "'>";
-                    html += "<td>" + fec + "</td>";
-                    html += "<td>" + hor + "</td>";
-                    html += "<td style='text-align:left;'>" + pac + "</td>";
-                    html += "<td style='text-align:left;'>" + med + "</td>";
-                    html += "<td>" + esp + "</td>";
-                    html += "<td class='" + claseCelda + "'>" + (est == "CONFLICTO" ? "⚠ CONFLICTO" : est) + "</td>";
-                    html += "</tr>";
+    QMap<QString, QString> mapaEspecialidades;
+    bool enMed = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "medicos") enMed = true;
+        if(enMed && val == "medico") {
+            QString nombreMed = tokensActuales[i+2].lexema.remove("\"");
+            for(int j = i; j < i + 15 && j < tokensActuales.size(); j++) {
+                if(tokensActuales[j].lexema.toLower() == "especialidad") {
+                    mapaEspecialidades[nombreMed] = tokensActuales[j+2].lexema.remove("\"");
                 }
-                fec=hor=pac=med=esp=est="";
             }
         }
+        if(enMed && tokensActuales[i].lexema == "}") enMed = false;
+    }
+
+    struct Cita {
+        QString fecha, hora, paciente, medico, especialidad, estado, clase;
+    };
+    QList<Cita> listaAgenda;
+
+    bool enCitas = false;
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        if(val == "citas") enCitas = true;
+        if(enCitas && val == "cita") {
+            Cita c;
+            c.paciente = tokensActuales[i+2].lexema.remove("\"");
+            if(tokensActuales[i+3].lexema.toLower() == "con") {
+                c.medico = tokensActuales[i+4].lexema.remove("\"");
+            }
+
+            for(int j = i; j < i + 20 && j < tokensActuales.size(); j++) {
+                QString k = tokensActuales[j].lexema.remove("\"").toLower();
+                if(k == "fecha") c.fecha = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "hora") c.hora = tokensActuales[j+2].lexema.remove("\"");
+            }
+            c.especialidad = mapaEspecialidades.value(c.medico, "N/A");
+
+            c.estado = "CONFIRMADA";
+            c.clase = "confirmada";
+
+            if(c.fecha > "2025-04-10") {
+                c.estado = "PENDIENTE";
+                c.clase = "pendiente";
+            }
+
+            for(const Cita &existente : listaAgenda) {
+                if(existente.medico == c.medico && existente.fecha == c.fecha && existente.hora == c.hora) {
+                    c.estado = "CONFLICTO";
+                    c.clase = "conflicto";
+                    break;
+                }
+            }
+            listaAgenda.append(c);
+        }
+        if(enCitas && tokensActuales[i].lexema == "}") enCitas = false;
+    }
+
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; }";
+    html += "th { background-color: #1e3d33; color: white; padding: 12px; border: 1px solid #ccc; }";
+    html += "td { border: 1px solid #ddd; padding: 10px; }";
+    html += ".status { padding: 8px; border-radius: 4px; color: white; font-weight: bold; text-align: center; display: block; }";
+    html += ".confirmada { background-color: #2e7d32; }"; // Verde
+    html += ".conflicto { background-color: #c62828; }";  // Rojo
+    html += ".pendiente { background-color: #ef6c00; }";  // Naranja
+    html += ".fila-conflicto { background-color: #ffebee; }"; // Fondo rosado suave para la fila
+    html += "</style></head><body><h1>Reporte 3: Agenda de Citas</h1>";
+    html += "<table><thead><tr><th>Fecha</th><th>Hora</th><th>Paciente</th><th>Médico</th><th>Especialidad</th><th>Estado</th></tr></thead><tbody>";
+
+    for(const Cita &c : listaAgenda) {
+        QString filaEstilo = (c.clase == "conflicto") ? " class='fila-conflicto'" : "";
+        html += "<tr" + filaEstilo + ">";
+        html += "<td>" + c.fecha + "</td><td>" + c.hora + "</td>";
+        html += "<td>" + c.paciente + "</td><td>" + c.medico + "</td>";
+        html += "<td>" + c.especialidad + "</td>";
+        html += "<td><span class='status " + c.clase + "'>" + c.estado + "</span></td></tr>";
     }
 
     html += "</tbody></table></body></html>";
 
-    QFile f("Reporte3_Citas.html");
+    QFile f("Reporte3_Agenda.html");
     if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&f); out << html; f.close();
         QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
