@@ -141,12 +141,25 @@
      <string>Agenda de Citas</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="btnVerjerarquia">
+   <widget class="QPushButton" name="btnGenerarReporteGrap">
     <property name="geometry">
      <rect>
-      <x>510</x>
-      <y>500</y>
-      <width>121</width>
+      <x>330</x>
+      <y>480</y>
+      <width>191</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Generar Reporte Graphix</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnJerarquia">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>470</y>
+      <width>111</width>
       <height>29</height>
      </rect>
     </property>

@@ -49,12 +49,34 @@ void MainWindow::on_pushButton_clicked()
         QMessageBox::warning(this, "Aviso", "El cuadro de texto está vacío.");
         return;
     }
+    this->tokensActuales.clear();
+    this->listaErrores.clear();
 
     Scanner miScanner;
     this->tokensActuales = miScanner.analizar(textoEntrada);
 
-    qDebug() << "Tokens encontrados:" << this->tokensActuales.size();
-    QMessageBox::information(this, "Scanner", "Análisis léxico finalizado.");
+    this->listaErrores = miScanner.getErrores();
+
+    for (int k = 0; k < this->listaErrores.size(); k++) {
+        this->listaErrores[k].no = k + 1;
+    }
+
+    if (!this->listaErrores.isEmpty()) {
+        QMessageBox::critical(this, "Análisis finalizado",
+                              "Se detectaron " + QString::number(listaErrores.size()) + " error(es) léxico(s).\n"
+                                                                                        "Presiona 'Reporte de Errores' para ver el detalle.");
+    } else {
+        QMessageBox::information(this, "Análisis finalizado",
+                                 "✔ Análisis léxico exitoso. No se encontraron errores.");
+    }
+
+    if(!this->listaErrores.isEmpty()) {
+        QMessageBox::critical(this, "Análisis finalizado",
+                              "Se detectaron " + QString::number(listaErrores.size()) + " errores.");
+    } else {
+        QMessageBox::information(this, "Análisis finalizado",
+                                 "Análisis léxico exitoso.");
+    }
 }
 
 
@@ -433,7 +455,7 @@ void MainWindow::on_btnCargaMedicos_clicked()
 
         html += "<tr>";
         html += "<td><b>" + m.nombre + "</b></td>";
-        html += "<td>" + m.codigo + "</td>"; // Columna de código independiente
+        html += "<td>" + m.codigo + "</td>";
         html += "<td>" + m.especialidad + "</td>";
         html += "<td>" + QString::number(citas) + "</td>";
         html += "<td>" + QString::number(m.pacientesUnicos.size()) + "</td>";
@@ -557,3 +579,50 @@ void MainWindow::on_btnLimpiar_clicked()
     QMessageBox::information(this, "Limpiar", "Pantalla y datos limpios.");
 }
 
+
+void MainWindow::on_btnReporteErrores_clicked()
+{
+    if(this->listaErrores.isEmpty()) {
+        QMessageBox::information(this, "Reporte de Errores", "¡Felicidades! No se encontraron errores léxicos en el archivo.");
+        return;
+    }
+
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; }";
+    html += "th { background-color: #1e3d33; color: white; padding: 12px; border: 1px solid #ddd; }";
+    html += "td { padding: 10px; border: 1px solid #ddd; text-align: center; font-size: 14px; }";
+    html += ".desc { text-align: left; }";
+    html += ".error-cell { background-color: #c62828; color: white; font-weight: bold; }";
+    html += ".critico-cell { background-color: #b71c1c; color: #ffcdd2; font-weight: bold; }";
+    html += "</style></head><body>";
+
+    html += "<h2>Reporte de Errores Léxicos</h2>";
+    html += "<table><thead><tr>";
+    html += "<th>No.</th><th>Lexema</th><th>Tipo de Error</th><th>Descripción</th><th>Línea</th><th>Columna</th><th>Gravedad</th>";
+    html += "</tr></thead><tbody>";
+
+    for(const auto &e : listaErrores) {
+        QString claseGravedad = (e.gravedad == "CRÍTICO") ? "critico-cell" : "error-cell";
+
+        html += "<tr>";
+        html += "<td>" + QString::number(e.no) + "</td>";
+        html += "<td>" + e.lexema + "</td>";
+        html += "<td>" + e.tipo + "</td>";
+        html += "<td class='desc'>" + e.descripcion + "</td>";
+        html += "<td>" + QString::number(e.linea) + "</td>";
+        html += "<td>" + QString::number(e.columna) + "</td>";
+        html += "<td class='" + claseGravedad + "'>" + e.gravedad + "</td>";
+        html += "</tr>";
+    }
+
+    html += "</tbody></table></body></html>";
+
+    QFile f("Reporte_Errores.html");
+    if(f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&f);
+        out << html;
+        f.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
+    }
+}

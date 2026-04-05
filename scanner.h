@@ -9,6 +9,7 @@ enum TipoToken {
     PACIENTE_ELEMENTO, MEDICO_ELEMENTO, CITA_ELEMENTO, DIAGNOSTICO_ELEMENTO,
     ID_MEDICO, CADENA, NUMERO,
     LLAVE_A, LLAVE_C, CORCHETE_A, CORCHETE_C, DOS_PUNTOS, COMA,
+    PUNTO_COMA,
     ERROR
 };
 
@@ -42,10 +43,25 @@ struct Medico {
     QString especialidad;
 };
 
+struct ErrorLexico {
+    int no;
+    QString lexema;
+    QString tipo;
+    QString descripcion;
+    int linea;
+    int columna;
+    QString gravedad;
+};
+
 class Scanner {
 public:
     Scanner();
     QList<Token> analizar(QString entrada);
+    QList<ErrorLexico> getErrores();
+
+private:
+    QList<ErrorLexico> errores;
+    void registrarError(QString lex, QString tipo, QString desc, int l, int c, QString gravedad);
 };
 
 #endif
