@@ -108,7 +108,6 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->on_btnEstaditicasG_clicked(); break;
         case 7: _t->on_btnLimpiar_clicked(); break;
         case 8: _t->on_btnReporteErrores_clicked(); break;
-        case 9: _t->on_btnJerarquia_clicked(); break;
         case 10: _t->on_btnGenerarReporteGrap_clicked(); break;
         default: ;
         }

@@ -58,8 +58,8 @@ public:
     Scanner();
     QList<Token> analizar(QString entrada);
     QList<ErrorLexico> getErrores();
-    QList<Paciente> getPacientes(); // <--- Esta
-    QList<Medico> getMedicos();     // <--- Y esta
+    QList<Paciente> getPacientes();
+    QList<Medico> getMedicos();
 
 private:
     QList<ErrorLexico> errores;

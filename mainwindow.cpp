@@ -35,13 +35,11 @@ void MainWindow::on_btnCargar_clicked()
             ui->plainTextEdit->setPlainText(contenido);
             archivo.close();
 
-            // --- PROCESAMIENTO ---
             Scanner scanner;
             this->tokensActuales = scanner.analizar(contenido);
             this->listaErrores = scanner.getErrores();
             this->listaPacientesGlobal = scanner.getPacientes();
             this->listaMedicosGlobal = scanner.getMedicos();
-            // ---------------------
 
             QMessageBox::information(this, "Éxito", "Archivo analizado y listas llenas.");
         }
@@ -635,14 +633,193 @@ void MainWindow::on_btnReporteErrores_clicked()
     }
 }
 
-void MainWindow::on_btnJerarquia_clicked()
-{
-
-}
-
 
 void MainWindow::on_btnGenerarReporteGrap_clicked()
 {
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero analizá el archivo.");
+        return;
+    }
 
+    struct CitaDot { QString paciente, medico, fecha, hora; };
+    struct DiagDot  { QString paciente, condicion, medicamento, dosis; };
+
+    QList<Paciente> pacs;
+    QList<Medico>   meds;
+    QList<CitaDot>  citas;
+    QList<DiagDot>  diags;
+
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        if(tokensActuales[i].lexema.toLower() != "paciente") continue;
+        if(i+1 >= tokensActuales.size() || tokensActuales[i+1].lexema != ":") continue;
+        if(i+2 >= tokensActuales.size()) continue;
+
+        Paciente p;
+        p.nombre = tokensActuales[i+2].lexema;
+        p.nombre.remove('"');
+
+        for(int j = i+3; j < tokensActuales.size(); j++) {
+            QString lex = tokensActuales[j].lexema;
+            if(lex == "]") break;
+            QString lx = lex.toLower();
+            if(lx == "edad"        && j+2 < tokensActuales.size()) p.edad       = tokensActuales[j+2].lexema.toInt();
+            if(lx == "tipo_sangre" && j+2 < tokensActuales.size()) { p.sangre   = tokensActuales[j+2].lexema; p.sangre.remove('"'); }
+            if(lx == "habitacion"  && j+2 < tokensActuales.size()) p.habitacion = tokensActuales[j+2].lexema.toInt();
+        }
+        pacs.append(p);
+    }
+
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        if(tokensActuales[i].lexema.toLower() != "medico") continue;
+        if(i+1 >= tokensActuales.size() || tokensActuales[i+1].lexema != ":") continue;
+        if(i+2 >= tokensActuales.size()) continue;
+
+        Medico m;
+        m.nombre = tokensActuales[i+2].lexema;
+        m.nombre.remove('"');
+
+        for(int j = i+3; j < tokensActuales.size(); j++) {
+            QString lex = tokensActuales[j].lexema;
+            if(lex == "]") break;
+            QString lx = lex.toLower();
+            if(lx == "especialidad" && j+2 < tokensActuales.size()) m.especialidad = tokensActuales[j+2].lexema;
+            if(lx == "codigo"       && j+2 < tokensActuales.size()) { m.codigo = tokensActuales[j+2].lexema; m.codigo.remove('"'); }
+        }
+        meds.append(m);
+    }
+
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        if(tokensActuales[i].lexema.toLower() != "cita") continue;
+        if(i+1 >= tokensActuales.size() || tokensActuales[i+1].lexema != ":") continue;
+        if(i+4 >= tokensActuales.size()) continue;
+
+        CitaDot c;
+        c.paciente = tokensActuales[i+2].lexema; c.paciente.remove('"');
+        c.medico   = tokensActuales[i+4].lexema; c.medico.remove('"');
+
+        for(int j = i+4; j < tokensActuales.size(); j++) {
+            QString lex = tokensActuales[j].lexema;
+            if(lex == "]") break;
+            QString lx = lex.toLower();
+            if(lx == "fecha" && j+2 < tokensActuales.size()) { c.fecha = tokensActuales[j+2].lexema; c.fecha.remove('"'); }
+            if(lx == "hora"  && j+2 < tokensActuales.size()) { c.hora  = tokensActuales[j+2].lexema; c.hora.remove('"');  }
+        }
+        citas.append(c);
+    }
+
+    for(int i = 0; i < tokensActuales.size(); i++) {
+        if(tokensActuales[i].lexema.toLower() != "diagnostico") continue;
+        if(i+1 >= tokensActuales.size() || tokensActuales[i+1].lexema != ":") continue;
+        if(i+2 >= tokensActuales.size()) continue;
+
+        DiagDot d;
+        d.paciente = tokensActuales[i+2].lexema; d.paciente.remove('"');
+
+        for(int j = i+3; j < tokensActuales.size(); j++) {
+            QString lex = tokensActuales[j].lexema;
+            if(lex == "]") break;
+            QString lx = lex.toLower();
+            if((lx == "condicion" || lx == "condici\u00f3n") && j+2 < tokensActuales.size()) {
+                d.condicion = tokensActuales[j+2].lexema; d.condicion.remove('"');
+            }
+            if(lx == "medicamento" && j+2 < tokensActuales.size()) {
+                d.medicamento = tokensActuales[j+2].lexema; d.medicamento.remove('"');
+            }
+            if(lx == "dosis" && j+2 < tokensActuales.size()) {
+                d.dosis = tokensActuales[j+2].lexema; d.dosis.remove('"');
+            }
+        }
+        diags.append(d);
+    }
+
+    QString dot;
+    dot += "digraph Hospital {\n";
+    dot += "  rankdir=TB;\n";
+    dot += "  node [shape=box, style=filled, fontname=\"Arial\"];\n\n";
+
+    dot += "  H [label=\"Hospital General\", fillcolor=\"#1A4731\", fontcolor=white, shape=ellipse];\n";
+    dot += "  P [label=\"PACIENTES\",    fillcolor=\"#2E7D52\", fontcolor=white];\n";
+    dot += "  M [label=\"MEDICOS\",      fillcolor=\"#2E7D52\", fontcolor=white];\n";
+    dot += "  C [label=\"CITAS\",        fillcolor=\"#2E7D52\", fontcolor=white];\n";
+    dot += "  D [label=\"DIAGNOSTICOS\", fillcolor=\"#2E7D52\", fontcolor=white];\n";
+    dot += "  H -> P; H -> M; H -> C; H -> D;\n\n";
+
+    for(int i = 0; i < pacs.size(); i++) {
+        const Paciente &p = pacs[i];
+        dot += QString("  p%1 [label=\"%2\\n%3 | Hab. %4\", fillcolor=\"#D4EDDA\"];\n")
+                   .arg(i).arg(p.nombre).arg(p.sangre).arg(p.habitacion);
+        dot += QString("  P -> p%1;\n").arg(i);
+    }
+    dot += "\n";
+
+    for(int i = 0; i < meds.size(); i++) {
+        const Medico &m = meds[i];
+        dot += QString("  m%1 [label=\"%2\\n%3 | %4\", fillcolor=\"#D6EAF8\"];\n")
+                   .arg(i).arg(m.nombre).arg(m.codigo).arg(m.especialidad);
+        dot += QString("  M -> m%1;\n").arg(i);
+    }
+    dot += "\n";
+
+    for(const CitaDot &c : citas) {
+        int pi = -1, mi = -1;
+        for(int i = 0; i < pacs.size(); i++) if(pacs[i].nombre == c.paciente) { pi = i; break; }
+        for(int i = 0; i < meds.size(); i++) if(meds[i].nombre == c.medico)   { mi = i; break; }
+        if(pi >= 0 && mi >= 0) {
+            dot += QString("  p%1 -> m%2 [label=\"%3 %4\", color=\"#E67E22\", style=dashed];\n")
+            .arg(pi).arg(mi).arg(c.fecha).arg(c.hora);
+        }
+    }
+    dot += "\n";
+
+    for(int i = 0; i < diags.size(); i++) {
+        const DiagDot &d = diags[i];
+        dot += QString("  d%1 [label=\"%2\\n%3 / %4\", fillcolor=\"#FDEBD0\"];\n")
+                   .arg(i).arg(d.condicion).arg(d.medicamento).arg(d.dosis);
+        dot += QString("  D -> d%1;\n").arg(i);
+        for(int pi = 0; pi < pacs.size(); pi++) {
+            if(pacs[pi].nombre == d.paciente) {
+                dot += QString("  d%1 -> p%2 [label=\"diagnostico activo\", color=\"#C0392B\"];\n")
+                .arg(i).arg(pi);
+            }
+        }
+    }
+
+    dot += "}\n";
+
+    QFile fDot("hospital.dot");
+    if(fDot.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&fDot);
+        out << dot;
+        fDot.close();
+    }
+
+    QString html;
+    html += "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+    html += "<title>Diagrama Hospital</title>";
+    html += "<script src='https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js'></script>";
+    html += "<script src='https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js'></script>";
+    html += "<style>";
+    html += "body { margin:0; background:#f4f7f6; display:flex; flex-direction:column; align-items:center; padding:20px; font-family:sans-serif; }";
+    html += "h1 { color:#1A4731; }";
+    html += "#graph svg { max-width:100%; height:auto; background:white; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:10px; }";
+    html += "</style></head><body>";
+    html += "<h1>Diagrama Graphviz \u2014 Hospital</h1>";
+    html += "<div id='graph'></div>";
+    html += "<script>";
+    html += "var dotSrc = `" + dot + "`;";
+    html += "var viz = new Viz();";
+    html += "viz.renderSVGElement(dotSrc)";
+    html += ".then(function(element){ document.getElementById('graph').appendChild(element); })";
+    html += ".catch(function(error){ document.getElementById('graph').innerHTML = '<pre style=\"color:red\">' + error + '</pre>'; });";
+    html += "</script></body></html>";
+
+    QFile fHtml("hospital_grafo.html");
+    if(fHtml.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&fHtml);
+        out << html;
+        fHtml.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(fHtml).absoluteFilePath()));
+    } else {
+        QMessageBox::critical(this, "Error", "No se pudo crear el archivo HTML.");
+    }
 }
-

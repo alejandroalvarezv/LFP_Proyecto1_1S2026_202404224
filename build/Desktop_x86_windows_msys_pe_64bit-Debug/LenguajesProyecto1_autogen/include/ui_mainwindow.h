@@ -35,7 +35,6 @@ public:
     QPushButton *btnCargaMedicos;
     QPushButton *btnAgendaCitas;
     QPushButton *btnGenerarReporteGrap;
-    QPushButton *btnJerarquia;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -79,9 +78,6 @@ public:
         btnGenerarReporteGrap = new QPushButton(centralwidget);
         btnGenerarReporteGrap->setObjectName("btnGenerarReporteGrap");
         btnGenerarReporteGrap->setGeometry(QRect(330, 480, 191, 29));
-        btnJerarquia = new QPushButton(centralwidget);
-        btnJerarquia->setObjectName("btnJerarquia");
-        btnJerarquia->setGeometry(QRect(650, 470, 111, 29));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -109,7 +105,6 @@ public:
         btnCargaMedicos->setText(QCoreApplication::translate("MainWindow", "Carga de Medicos", nullptr));
         btnAgendaCitas->setText(QCoreApplication::translate("MainWindow", "Agenda de Citas", nullptr));
         btnGenerarReporteGrap->setText(QCoreApplication::translate("MainWindow", "Generar Reporte Graphix", nullptr));
-        btnJerarquia->setText(QCoreApplication::translate("MainWindow", "Ver Jerarquia", nullptr));
     } // retranslateUi
 
 };
