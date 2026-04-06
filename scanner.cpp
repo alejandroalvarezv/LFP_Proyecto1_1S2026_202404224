@@ -6,6 +6,14 @@ QList<ErrorLexico> Scanner::getErrores() {
     return this->errores;
 }
 
+QList<Paciente> Scanner::getPacientes() {
+    return this->listaPacientes;
+}
+
+QList<Medico> Scanner::getMedicos() {
+    return this->listaMedicos;
+}
+
 void Scanner::registrarError(QString lex, QString tipo, QString desc, int l, int c, QString gravedad) {
     ErrorLexico e;
     e.no      = errores.size() + 1;
@@ -88,7 +96,7 @@ QList<Token> Scanner::analizar(QString entrada) {
             }
             break;
         case 1:
-            if (c.isLetterOrNumber() || c == '_' || c == '-' || c == ':' || c == '.') {
+            if (c.isLetterOrNumber() || c == '_' || c == '-' || c == '.') {
                 lexema += c;
                 columna++;
             } else {
@@ -230,6 +238,51 @@ QList<Token> Scanner::analizar(QString entrada) {
             break;
         }
     }
+
+    this->listaPacientes.clear();
+    this->listaMedicos.clear();
+
+    for (int j = 0; j < lista.size(); j++) {
+        QString lexBajo = lista[j].lexema.toLower();
+
+        if (lexBajo == "paciente" && (j + 2) < lista.size()) {
+            if (lista[j+1].tipo == DOS_PUNTOS) {
+                Paciente p;
+                p.nombre = lista[j+2].lexema.remove('"');
+
+                for (int k = j + 2; k < lista.size() && lista[k].tipo != CORCHETE_C; k++) {
+                    QString campo = lista[k].lexema.toLower();
+                    if (campo == "edad" && (k + 2) < lista.size()) {
+                        p.edad = lista[k+2].lexema.toInt();
+                    } else if (campo == "tipo_sangre" && (k + 2) < lista.size()) {
+                        p.sangre = lista[k+2].lexema.remove('"');
+                    } else if (campo == "habitacion" && (k + 2) < lista.size()) {
+                        p.habitacion = lista[k+2].lexema.toInt();
+                    }
+                }
+                this->listaPacientes.append(p);
+            }
+        }
+
+        else if (lexBajo == "medico" && (j + 2) < lista.size()) {
+            if (lista[j+1].tipo == DOS_PUNTOS) {
+                Medico m;
+                m.nombre = lista[j+2].lexema.remove('"');
+
+                for (int k = j + 2; k < lista.size() && lista[k].tipo != CORCHETE_C; k++) {
+                    QString campo = lista[k].lexema.toLower();
+                    if (campo == "especialidad" && (k + 2) < lista.size()) {
+                        m.especialidad = lista[k+2].lexema;
+                    } else if (campo == "codigo" && (k + 2) < lista.size()) {
+                        m.codigo = lista[k+2].lexema.remove('"');
+                    }
+                }
+                this->listaMedicos.append(m);
+            }
+        }
+    }
+
+
 
     return lista;
 }

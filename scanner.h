@@ -58,10 +58,14 @@ public:
     Scanner();
     QList<Token> analizar(QString entrada);
     QList<ErrorLexico> getErrores();
+    QList<Paciente> getPacientes(); // <--- Esta
+    QList<Medico> getMedicos();     // <--- Y esta
 
 private:
     QList<ErrorLexico> errores;
     void registrarError(QString lex, QString tipo, QString desc, int l, int c, QString gravedad);
+    QList<Paciente> listaPacientes;
+    QList<Medico> listaMedicos;
 };
 
 #endif

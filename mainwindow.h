@@ -30,10 +30,16 @@ private slots:
     void on_btnLimpiar_clicked();
     void on_btnReporteErrores_clicked();
 
+    void on_btnJerarquia_clicked();
+
+    void on_btnGenerarReporteGrap_clicked();
+
 private:
     Ui::MainWindow *ui;
     QList<Token> tokensActuales;
     QList<ErrorLexico> listaErrores;
+    QList<Paciente> listaPacientesGlobal;
+    QList<Medico> listaMedicosGlobal;
 };
 
 #endif

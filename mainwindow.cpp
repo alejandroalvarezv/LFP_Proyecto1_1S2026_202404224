@@ -31,11 +31,19 @@ void MainWindow::on_btnCargar_clicked()
         QFile archivo(nombre);
         if (archivo.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QTextStream in(&archivo);
-            ui->plainTextEdit->setPlainText(in.readAll());
+            QString contenido = in.readAll();
+            ui->plainTextEdit->setPlainText(contenido);
             archivo.close();
-            QMessageBox::information(this, "Éxito", "Archivo cargado correctamente.");
-        } else {
-            QMessageBox::critical(this, "Error", "No se pudo abrir el archivo.");
+
+            // --- PROCESAMIENTO ---
+            Scanner scanner;
+            this->tokensActuales = scanner.analizar(contenido);
+            this->listaErrores = scanner.getErrores();
+            this->listaPacientesGlobal = scanner.getPacientes();
+            this->listaMedicosGlobal = scanner.getMedicos();
+            // ---------------------
+
+            QMessageBox::information(this, "Éxito", "Archivo analizado y listas llenas.");
         }
     }
 }
@@ -626,3 +634,15 @@ void MainWindow::on_btnReporteErrores_clicked()
         QDesktopServices::openUrl(QUrl::fromLocalFile(f.fileName()));
     }
 }
+
+void MainWindow::on_btnJerarquia_clicked()
+{
+
+}
+
+
+void MainWindow::on_btnGenerarReporteGrap_clicked()
+{
+
+}
+
