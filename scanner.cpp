@@ -29,6 +29,11 @@ static const QStringList KEYWORDS_VALIDAS = {
     "HOSPITAL", "PACIENTES", "MEDICOS", "CITAS", "DIAGNOSTICOS"
 };
 
+static bool tieneDigito(const QString& s) {
+    for (QChar ch : s) if (ch.isDigit()) return true;
+    return false;
+}
+
 QList<Token> Scanner::analizar(QString entrada) {
     QList<Token> lista;
     this->errores.clear();
@@ -48,8 +53,15 @@ QList<Token> Scanner::analizar(QString entrada) {
 
         case 0:
             if (c.isSpace()) {
-                if (c == '\n') { linea++; columna = 1; }
-                else           { columna++; }
+                if (c == '\n') {
+                    linea++;
+                    columna = 1;
+                } else {
+                    columna++;
+                }
+            }
+            else if (c == '\r' || c == '\t' || c.isNull()) {
+                columna++;
             }
             else if (c.isLetter() || c.isDigit()) {
                 estado  = 1;
@@ -62,33 +74,32 @@ QList<Token> Scanner::analizar(QString entrada) {
                 colInicioStr = columna;
                 columna++;
             }
-            else if (c == '{') { lista.append({LLAVE_A,      "{", linea, columna++}); }
-            else if (c == '}') { lista.append({LLAVE_C,      "}", linea, columna++}); }
-            else if (c == '[') { lista.append({CORCHETE_A,   "[", linea, columna++}); }
-            else if (c == ']') { lista.append({CORCHETE_C,   "]", linea, columna++}); }
-            else if (c == ':') { lista.append({DOS_PUNTOS,   ":", linea, columna++}); }
-            else if (c == ',') { lista.append({COMA,         ",", linea, columna++}); }
-            else if (c == ';') { lista.append({PUNTO_COMA,   ";", linea, columna++}); }
+            else if (c == '{') { lista.append({LLAVE_A, "{", linea, columna++}); }
+            else if (c == '}') { lista.append({LLAVE_C, "}", linea, columna++}); }
+            else if (c == '[') { lista.append({CORCHETE_A, "[", linea, columna++}); }
+            else if (c == ']') { lista.append({CORCHETE_C, "]", linea, columna++}); }
+            else if (c == ':') { lista.append({DOS_PUNTOS, ":", linea, columna++}); }
+            else if (c == ',') { lista.append({COMA, ",", linea, columna++}); }
+            else if (c == ';') { lista.append({PUNTO_COMA, ";", linea, columna++}); }
             else {
                 registrarError(QString(c), "Carácter ilegal",
-                               "El carácter '" + QString(c) + "' no pertenece al lenguaje.",
+                               "El carácter '" + QString(c) + "' no es reconocido.",
                                linea, columna++, "ERROR");
             }
             break;
-
         case 1:
             if (c.isLetterOrNumber() || c == '_' || c == '-' || c == ':' || c == '.') {
                 lexema += c;
                 columna++;
             } else {
-                QString aux    = lexema.toUpper();
+                QString aux     = lexema.toUpper();
                 int     colReal = columna - (int)lexema.length();
 
-                if      (aux == "HOSPITAL")     lista.append({HOSPITAL,    lexema, linea, colReal});
-                else if (aux == "PACIENTES")    lista.append({PACIENTES,   lexema, linea, colReal});
-                else if (aux == "MEDICOS")      lista.append({MEDICOS,     lexema, linea, colReal});
-                else if (aux == "CITAS")        lista.append({CITAS,       lexema, linea, colReal});
-                else if (aux == "DIAGNOSTICOS") lista.append({DIAGNOSTICOS,lexema, linea, colReal});
+                if      (aux == "HOSPITAL")     lista.append({HOSPITAL,     lexema, linea, colReal});
+                else if (aux == "PACIENTES")    lista.append({PACIENTES,    lexema, linea, colReal});
+                else if (aux == "MEDICOS")      lista.append({MEDICOS,      lexema, linea, colReal});
+                else if (aux == "CITAS")        lista.append({CITAS,        lexema, linea, colReal});
+                else if (aux == "DIAGNOSTICOS") lista.append({DIAGNOSTICOS, lexema, linea, colReal});
 
                 else if (lexema.at(0).isDigit()) lista.append({NUMERO, lexema, linea, colReal});
 
@@ -117,6 +128,7 @@ QList<Token> Scanner::analizar(QString entrada) {
 
                 estado = 0;
                 lexema = "";
+                i--;
             }
             break;
 
@@ -125,9 +137,9 @@ QList<Token> Scanner::analizar(QString entrada) {
                 QString val   = lexema.trimmed();
                 QString valUP = val.toUpper();
 
-
                 if ((val.contains('+') || val.contains('-')) &&
-                    val.length() >= 2 && val.length() <= 3)
+                    val.length() >= 2 && val.length() <= 3 &&
+                    !tieneDigito(val))
                 {
                     QStringList sangres = {"O+","O-","A+","A-","B+","B-","AB+","AB-"};
                     if (!sangres.contains(valUP)) {
@@ -141,7 +153,8 @@ QList<Token> Scanner::analizar(QString entrada) {
                     }
                 }
                 else if (val.contains('-') && val.length() > 3 && val.length() < 10
-                         && val.split("-").size() != 3)
+                         && val.split("-").size() != 3
+                         && !tieneDigito(val))
                 {
                     registrarError(
                         "\"" + lexema + "\"",
