@@ -197,7 +197,9 @@ QList<Token> Scanner::analizar(QString entrada) {
                     }
                 }
 
-                if (val.contains(":") && val.split(":").size() == 2) {
+                QStringList partes = val.split(":");
+                if (partes.size() == 2 && partes[0].length() <= 2 && partes[1].length() == 2
+                    && partes[0].length() >= 1) {
                     QStringList p = val.split(":");
                     bool okHr, okMin;
                     int hr  = p[0].toInt(&okHr);
@@ -239,50 +241,61 @@ QList<Token> Scanner::analizar(QString entrada) {
         }
     }
 
+
     this->listaPacientes.clear();
     this->listaMedicos.clear();
 
     for (int j = 0; j < lista.size(); j++) {
-        QString lexBajo = lista[j].lexema.toLower();
+        QString lex = lista[j].lexema.toLower();
 
-        if (lexBajo == "paciente" && (j + 2) < lista.size()) {
-            if (lista[j+1].tipo == DOS_PUNTOS) {
-                Paciente p;
-                p.nombre = lista[j+2].lexema.remove('"');
-
-                for (int k = j + 2; k < lista.size() && lista[k].tipo != CORCHETE_C; k++) {
-                    QString campo = lista[k].lexema.toLower();
-                    if (campo == "edad" && (k + 2) < lista.size()) {
-                        p.edad = lista[k+2].lexema.toInt();
-                    } else if (campo == "tipo_sangre" && (k + 2) < lista.size()) {
-                        p.sangre = lista[k+2].lexema.remove('"');
-                    } else if (campo == "habitacion" && (k + 2) < lista.size()) {
-                        p.habitacion = lista[k+2].lexema.toInt();
-                    }
-                }
-                this->listaPacientes.append(p);
+        if (lex == "paciente" && (j + 2) < lista.size()) {
+            Paciente p;
+            p.nombre = lista[j+2].lexema.remove('"').trimmed();
+            for (int k = j + 2; k < lista.size() && lista[k].lexema != ";"; k++) {
+                QString campo = lista[k].lexema.toLower();
+                if (campo == "edad") p.edad = lista[k+2].lexema.toInt();
+                else if (campo == "tipo_sangre") p.sangre = lista[k+2].lexema.remove('"').trimmed();
+                else if (campo == "habitacion") p.habitacion = lista[k+2].lexema.toInt();
             }
+            this->listaPacientes.append(p);
         }
-
-        else if (lexBajo == "medico" && (j + 2) < lista.size()) {
-            if (lista[j+1].tipo == DOS_PUNTOS) {
-                Medico m;
-                m.nombre = lista[j+2].lexema.remove('"');
-
-                for (int k = j + 2; k < lista.size() && lista[k].tipo != CORCHETE_C; k++) {
-                    QString campo = lista[k].lexema.toLower();
-                    if (campo == "especialidad" && (k + 2) < lista.size()) {
-                        m.especialidad = lista[k+2].lexema;
-                    } else if (campo == "codigo" && (k + 2) < lista.size()) {
-                        m.codigo = lista[k+2].lexema.remove('"');
-                    }
-                }
-                this->listaMedicos.append(m);
+        else if (lex == "medico" && (j + 2) < lista.size()) {
+            Medico m;
+            m.nombre = lista[j+2].lexema.remove('"').trimmed();
+            for (int k = j + 2; k < lista.size() && lista[k].lexema != ";"; k++) {
+                QString campo = lista[k].lexema.toLower();
+                if (campo == "especialidad") m.especialidad = lista[k+2].lexema;
+                else if (campo == "codigo") m.codigo = lista[k+2].lexema.remove('"').trimmed();
             }
+            this->listaMedicos.append(m);
         }
     }
 
+    for (int j = 0; j < lista.size(); j++) {
+        QString lex = lista[j].lexema.toLower();
 
+        if (lex.contains("diag") && (j + 2) < lista.size() && lista[j+1].lexema == ":") {
+            QString nombreABuscar = lista[j+2].lexema.remove('"').trimmed();
+
+            for (int i = 0; i < this->listaPacientes.size(); i++) {
+                if (this->listaPacientes[i].nombre.trimmed() == nombreABuscar) {
+
+                    for (int k = j + 2; k < lista.size() && lista[k].lexema != "]"; k++) {
+                        QString campo = lista[k].lexema.toLower();
+
+                        if (campo.contains("condic") && (k+2) < lista.size()) {
+                            this->listaPacientes[i].condicion = lista[k+2].lexema.remove('"').trimmed();
+                            this->listaPacientes[i].estado = "CON DIAG.";
+                        }
+                        else if (campo == "medicamento" && (k+2) < lista.size()) {
+                            this->listaPacientes[i].medicamento = lista[k+2].lexema.remove('"').trimmed();
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
 
     return lista;
 }

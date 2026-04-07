@@ -382,7 +382,7 @@ C:/Users/aleja/Documents/LenguajesProyecto1/mainwindow.h
  mdp:C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/stdint.h
  mdp:C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/syslimits.h
 C:/Users/aleja/Documents/LenguajesProyecto1/scanner.h
-C:/Users/aleja/Documents/LenguajesProyecto1/main.cpp
 C:/Users/aleja/Documents/LenguajesProyecto1/mainwindow.cpp
  uic:./ui_mainwindow.h
+C:/Users/aleja/Documents/LenguajesProyecto1/main.cpp
 C:/Users/aleja/Documents/LenguajesProyecto1/scanner.cpp

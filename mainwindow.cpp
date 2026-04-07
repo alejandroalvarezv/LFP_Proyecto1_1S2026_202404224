@@ -8,6 +8,7 @@
 #include <QUrl>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QTableWidgetItem>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -38,10 +39,8 @@ void MainWindow::on_btnCargar_clicked()
             Scanner scanner;
             this->tokensActuales = scanner.analizar(contenido);
             this->listaErrores = scanner.getErrores();
-            this->listaPacientesGlobal = scanner.getPacientes();
-            this->listaMedicosGlobal = scanner.getMedicos();
 
-            QMessageBox::information(this, "Éxito", "Archivo analizado y listas llenas.");
+            QMessageBox::information(this, "Éxito", "Archivo analizado y tablas actualizadas.");
         }
     }
 }
@@ -73,7 +72,7 @@ void MainWindow::on_pushButton_clicked()
                                                                                         "Presiona 'Reporte de Errores' para ver el detalle.");
     } else {
         QMessageBox::information(this, "Análisis finalizado",
-                                 "✔ Análisis léxico exitoso. No se encontraron errores.");
+                                 "Análisis léxico exitoso. No se encontraron errores.");
     }
 
     if(!this->listaErrores.isEmpty()) {
@@ -254,36 +253,75 @@ void MainWindow::on_btnEstaditicasG_clicked()
 
 void MainWindow::on_btnReporteTokens_clicked()
 {
-    {
-        if(this->tokensActuales.isEmpty()) {
-            QMessageBox::warning(this, "Aviso", "Primero debés cargar un archivo y darle al botón 'Analizar'.");
-            return;
+    if(this->tokensActuales.isEmpty()) {
+        QMessageBox::warning(this, "Aviso", "Primero debés cargar un archivo y darle al botón 'Analizar'.");
+        return;
+    }
+
+    // Función helper para obtener el nombre del tipo de token
+    auto nombreTipo = [](TipoToken t) -> QString {
+        switch(t) {
+        case HOSPITAL:             return "PALABRA_RESERVADA";
+        case PACIENTES:            return "PALABRA_RESERVADA";
+        case MEDICOS:              return "PALABRA_RESERVADA";
+        case CITAS:                return "PALABRA_RESERVADA";
+        case DIAGNOSTICOS:         return "PALABRA_RESERVADA";
+        case PACIENTE_ELEMENTO:    return "PALABRA_RESERVADA";
+        case MEDICO_ELEMENTO:      return "PALABRA_RESERVADA";
+        case CITA_ELEMENTO:        return "PALABRA_RESERVADA";
+        case DIAGNOSTICO_ELEMENTO: return "PALABRA_RESERVADA";
+        case ID_MEDICO:            return "IDENTIFICADOR";
+        case CADENA:               return "LITERAL_CADENA";
+        case NUMERO:               return "LITERAL_ENTERO";
+        case LLAVE_A:              return "LLAVE_ABRE";
+        case LLAVE_C:              return "LLAVE_CIERRA";
+        case CORCHETE_A:           return "CORCHETE_ABRE";
+        case CORCHETE_C:           return "CORCHETE_CIERRA";
+        case DOS_PUNTOS:           return "DOS_PUNTOS";
+        case COMA:                 return "COMA";
+        case PUNTO_COMA:           return "PUNTO_COMA";
+        case ERROR:                return "ERROR";
+        default:                   return "DESCONOCIDO";
         }
+    };
 
-        QString html = "<html><head><meta charset='UTF-8'><title>Reporte de Tokens</title>";
-        html += "<style>table{width:100%; border-collapse:collapse;} th,td{border:1px solid black; padding:8px; text-align:left;} th{background-color:#2c3e50; color:white;}</style></head><body>";
-        html += "<h1>Listado de Tokens Encontrados</h1>";
-        html += "<table><tr><th>#</th><th>Lexema</th><th>Línea</th></tr>";
+    QString html = "<html><head><meta charset='UTF-8'><style>";
+    html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
+    html += "h1 { color: #1e3d33; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }";
+    html += "th { background-color: #2c3e50; color: white; padding: 12px; text-align: left; border: 1px solid #1a252f; }";
+    html += "td { border: 1px solid #ddd; padding: 10px; font-size: 13px; }";
+    html += "tr:nth-child(even) { background-color: #f9f9f9; }";
+    html += "tr:hover { background-color: #eaf4ea; }";
+    html += ".error-row td { background-color: #fdecea; color: #c0392b; font-weight: bold; }";
+    html += "</style></head><body>";
+    html += "<h1>Listado de Tokens Encontrados</h1>";
+    html += "<table><thead><tr>";
+    html += "<th>No.</th><th>Lexema</th><th>Tipo</th><th>Línea</th><th>Columna</th>";
+    html += "</tr></thead><tbody>";
 
-        for(int i = 0; i < this->tokensActuales.size(); i++) {
-            html += "<tr>";
-            html += "<td>" + QString::number(i + 1) + "</td>";
-            html += "<td>" + this->tokensActuales[i].lexema + "</td>";
-            html += "<td>" + QString::number(this->tokensActuales[i].linea) + "</td>";
-            html += "</tr>";
-        }
+    for(int i = 0; i < this->tokensActuales.size(); i++) {
+        const Token &t = this->tokensActuales[i];
+        QString clase = (t.tipo == ERROR) ? " class='error-row'" : "";
+        html += "<tr" + clase + ">";
+        html += "<td>" + QString::number(i + 1) + "</td>";
+        html += "<td>" + t.lexema.toHtmlEscaped() + "</td>";
+        html += "<td>" + nombreTipo(t.tipo) + "</td>";
+        html += "<td>" + QString::number(t.linea) + "</td>";
+        html += "<td>" + QString::number(t.columna) + "</td>";
+        html += "</tr>";
+    }
 
-        html += "</table></body></html>";
+    html += "</tbody></table></body></html>";
 
-        QFile archivo("Reporte_Tokens.html");
-        if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&archivo);
-            out << html;
-            archivo.close();
-            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(archivo).absoluteFilePath()));
-        } else {
-            QMessageBox::critical(this, "Error", "No se pudo crear el archivo HTML.");
-        }
+    QFile archivo("Reporte_Tokens.html");
+    if(archivo.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&archivo);
+        out << html;
+        archivo.close();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(archivo).absoluteFilePath()));
+    } else {
+        QMessageBox::critical(this, "Error", "No se pudo crear el archivo HTML.");
     }
 }
 
@@ -301,20 +339,22 @@ void MainWindow::on_ReporteHistorialPacientes_clicked()
 
     bool enDiag = false;
     for(int i = 0; i < tokensActuales.size(); i++) {
-        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        QString val = tokensActuales[i].lexema.toLower();
         if(val == "diagnosticos") enDiag = true;
 
-        if(enDiag && val == "diagnostico") {
+        if(enDiag && val == "diagnostico" && (i + 2) < tokensActuales.size()) {
             QString pac = tokensActuales[i+2].lexema.remove("\"");
-
             contadorDiags[pac]++;
 
             InfoDiag d;
-            for(int j = i; j < i + 25 && j < tokensActuales.size(); j++) {
-                QString k = tokensActuales[j].lexema.remove("\"").toLower();
-                if(k == "condicion") d.cond = tokensActuales[j+2].lexema.remove("\"");
-                if(k == "medicamento") d.med = tokensActuales[j+2].lexema.remove("\"");
-                if(k == "dosis") d.dos = tokensActuales[j+2].lexema.remove("\"");
+            for(int j = i; j < tokensActuales.size() && tokensActuales[j].lexema != "]"; j++) {
+                QString k = tokensActuales[j].lexema.toLower();
+                if((k == "condicion" || k == "condici\u00f3n") && (j+2) < tokensActuales.size())
+                    d.cond = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "medicamento" && (j+2) < tokensActuales.size())
+                    d.med = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "dosis" && (j+2) < tokensActuales.size())
+                    d.dos = tokensActuales[j+2].lexema.remove("\"");
             }
             mapaDiagnosticos[pac] = d;
         }
@@ -323,10 +363,11 @@ void MainWindow::on_ReporteHistorialPacientes_clicked()
 
     QString html = "<html><head><meta charset='UTF-8'><style>";
     html += "body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }";
-    html += "table { width: 100%; border-collapse: collapse; background: white; }";
+    html += "table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }";
     html += "th { background-color: #2c3e50; color: white; padding: 12px; text-align: left; }";
     html += "td { border: 1px solid #ddd; padding: 10px; }";
-    html += ".status { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; display: inline-block; }";
+    html += "tr:nth-child(even) { background-color: #f9f9f9; }";
+    html += ".status { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; display: inline-block; font-size: 0.85em; }";
     html += ".activo { background-color: #27ae60; }";   // Verde
     html += ".sindiag { background-color: #e67e22; }";  // Naranja
     html += ".critico { background-color: #c0392b; }";  // Rojo
@@ -335,25 +376,25 @@ void MainWindow::on_ReporteHistorialPacientes_clicked()
 
     bool enPac = false;
     for(int i = 0; i < tokensActuales.size(); i++) {
-        QString val = tokensActuales[i].lexema.remove("\"").toLower();
+        QString val = tokensActuales[i].lexema.toLower();
         if(val == "pacientes") enPac = true;
 
-        if(enPac && val == "paciente") {
+        if(enPac && val == "paciente" && (i + 2) < tokensActuales.size()) {
             QString nom = tokensActuales[i+2].lexema.remove("\"");
             QString ed = "N/A", san = "N/A", hab = "N/A";
 
-            for(int j = i; j < i + 15 && j < tokensActuales.size(); j++) {
-                QString k = tokensActuales[j].lexema.remove("\"").toLower();
-                if(k == "edad") ed = tokensActuales[j+2].lexema;
-                if(k == "tipo_sangre") san = tokensActuales[j+2].lexema.remove("\"");
-                if(k == "habitacion") hab = tokensActuales[j+2].lexema;
+            for(int j = i; j < tokensActuales.size() && tokensActuales[j].lexema != "]"; j++) {
+                QString k = tokensActuales[j].lexema.toLower();
+                if(k == "edad" && (j+2) < tokensActuales.size()) ed = tokensActuales[j+2].lexema;
+                if(k == "tipo_sangre" && (j+2) < tokensActuales.size()) san = tokensActuales[j+2].lexema.remove("\"");
+                if(k == "habitacion" && (j+2) < tokensActuales.size()) hab = tokensActuales[j+2].lexema;
             }
 
             QString diag = "Sin registro", med = "N/A", est = "SIN DIAG.", clase = "sindiag";
 
             if(mapaDiagnosticos.contains(nom)) {
                 diag = mapaDiagnosticos[nom].cond;
-                med = mapaDiagnosticos[nom].med + " (" + mapaDiagnosticos[nom].dos + ")";
+                med = mapaDiagnosticos[nom].med + " <br><small>(" + mapaDiagnosticos[nom].dos + ")</small>";
 
                 bool marcadoUrgente = diag.toUpper().contains("URGENTE");
                 bool multiplesDiags = (contadorDiags[nom] > 1);
@@ -367,7 +408,7 @@ void MainWindow::on_ReporteHistorialPacientes_clicked()
                 }
             }
 
-            html += "<tr><td>" + nom + "</td><td>" + ed + "</td><td>" + san + "</td><td>" + hab + "</td>";
+            html += "<tr><td><b>" + nom + "</b></td><td>" + ed + "</td><td>" + san + "</td><td>" + hab + "</td>";
             html += "<td>" + diag + "</td><td>" + med + "</td>";
             html += "<td><span class='status " + clase + "'>" + est + "</span></td></tr>";
         }
@@ -765,8 +806,16 @@ void MainWindow::on_btnGenerarReporteGrap_clicked()
         for(int i = 0; i < pacs.size(); i++) if(pacs[i].nombre == c.paciente) { pi = i; break; }
         for(int i = 0; i < meds.size(); i++) if(meds[i].nombre == c.medico)   { mi = i; break; }
         if(pi >= 0 && mi >= 0) {
-            dot += QString("  p%1 -> m%2 [label=\"%3 %4\", color=\"#E67E22\", style=dashed];\n")
-            .arg(pi).arg(mi).arg(c.fecha).arg(c.hora);
+            QStringList partesFecha = c.fecha.split("-");
+            QStringList partesHora  = c.hora.split(":");
+            bool fechaOk = (partesFecha.size() == 3 && partesFecha[1].toInt() >= 1 && partesFecha[1].toInt() <= 12);
+            bool horaOk  = (partesHora.size() == 2  && partesHora[0].toInt() <= 23 && partesHora[1].toInt() <= 59);
+
+            if(fechaOk && horaOk) {
+                dot += QString("  C -> p%1 [style=dotted, color=\"#E67E22\"];\n").arg(pi);
+                dot += QString("  p%1 -> m%2 [label=\"%3 %4\", color=\"#E67E22\", style=dashed];\n")
+                           .arg(pi).arg(mi).arg(c.fecha).arg(c.hora);
+            }
         }
     }
     dot += "\n";
@@ -823,3 +872,5 @@ void MainWindow::on_btnGenerarReporteGrap_clicked()
         QMessageBox::critical(this, "Error", "No se pudo crear el archivo HTML.");
     }
 }
+
+

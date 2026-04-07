@@ -49,8 +49,13 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "on_btnEstaditicasG_clicked",
         "on_btnLimpiar_clicked",
         "on_btnReporteErrores_clicked",
-        "on_btnJerarquia_clicked",
-        "on_btnGenerarReporteGrap_clicked"
+        "on_btnGenerarReporteGrap_clicked",
+        "llenarTablaTokens",
+        "llenarTablaErrores",
+        "on_tablaerrores_cellActivated",
+        "row",
+        "column",
+        "on_tablaTokens_cellActivated"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -72,10 +77,20 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SlotData<void()>(9, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'on_btnReporteErrores_clicked'
         QtMocHelpers::SlotData<void()>(10, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'on_btnJerarquia_clicked'
-        QtMocHelpers::SlotData<void()>(11, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'on_btnGenerarReporteGrap_clicked'
+        QtMocHelpers::SlotData<void()>(11, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'llenarTablaTokens'
         QtMocHelpers::SlotData<void()>(12, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'llenarTablaErrores'
+        QtMocHelpers::SlotData<void()>(13, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_tablaerrores_cellActivated'
+        QtMocHelpers::SlotData<void(int, int)>(14, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 15 }, { QMetaType::Int, 16 },
+        }}),
+        // Slot 'on_tablaTokens_cellActivated'
+        QtMocHelpers::SlotData<void(int, int)>(17, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 15 }, { QMetaType::Int, 16 },
+        }}),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -108,11 +123,10 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->on_btnEstaditicasG_clicked(); break;
         case 7: _t->on_btnLimpiar_clicked(); break;
         case 8: _t->on_btnReporteErrores_clicked(); break;
-        case 10: _t->on_btnGenerarReporteGrap_clicked(); break;
+        case 9: _t->on_btnGenerarReporteGrap_clicked(); break;
         default: ;
         }
     }
-    (void)_a;
 }
 
 const QMetaObject *MainWindow::metaObject() const
@@ -134,14 +148,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 14)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 14;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 14)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 11;
+        _id -= 14;
     }
     return _id;
 }

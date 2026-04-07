@@ -29,10 +29,13 @@ private slots:
     void on_btnEstaditicasG_clicked();
     void on_btnLimpiar_clicked();
     void on_btnReporteErrores_clicked();
-
-    void on_btnJerarquia_clicked();
-
     void on_btnGenerarReporteGrap_clicked();
+    void llenarTablaTokens();
+    void llenarTablaErrores();
+
+    void on_tablaerrores_cellActivated(int row, int column);
+
+    void on_tablaTokens_cellActivated(int row, int column);
 
 private:
     Ui::MainWindow *ui;
@@ -40,6 +43,7 @@ private:
     QList<ErrorLexico> listaErrores;
     QList<Paciente> listaPacientesGlobal;
     QList<Medico> listaMedicosGlobal;
+    QString getTipoString(TipoToken tipo);
 };
 
 #endif
