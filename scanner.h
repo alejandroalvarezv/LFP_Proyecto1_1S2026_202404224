@@ -61,9 +61,10 @@ public:
     QList<Paciente> getPacientes();
     QList<Medico> getMedicos();
 
+    void registrarError(QString lex, QString tipo, QString desc, int l, int c, QString gravedad);
+
 private:
     QList<ErrorLexico> errores;
-    void registrarError(QString lex, QString tipo, QString desc, int l, int c, QString gravedad);
     QList<Paciente> listaPacientes;
     QList<Medico> listaMedicos;
 };

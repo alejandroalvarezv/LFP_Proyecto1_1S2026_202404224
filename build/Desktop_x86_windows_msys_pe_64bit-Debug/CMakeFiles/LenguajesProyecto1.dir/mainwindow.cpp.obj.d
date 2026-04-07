@@ -511,4 +511,5 @@ CMakeFiles/LenguajesProyecto1.dir/mainwindow.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qcalendar.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qfileinfo.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qtimezone.h \
- C:/Qt/6.11.0/mingw_64/include/QtWidgets/QTableWidgetItem
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/QTableWidgetItem \
+ C:/Qt/6.11.0/mingw_64/include/QtWidgets/QHeaderView

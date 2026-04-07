@@ -124,6 +124,10 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 7: _t->on_btnLimpiar_clicked(); break;
         case 8: _t->on_btnReporteErrores_clicked(); break;
         case 9: _t->on_btnGenerarReporteGrap_clicked(); break;
+        case 10: _t->llenarTablaTokens(); break;
+        case 11: _t->llenarTablaErrores(); break;
+        case 12: _t->on_tablaerrores_cellActivated((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<int>>(_a[2]))); break;
+        case 13: _t->on_tablaTokens_cellActivated((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<int>>(_a[2]))); break;
         default: ;
         }
     }

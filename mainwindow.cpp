@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTableWidgetItem>
+#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -75,13 +76,77 @@ void MainWindow::on_pushButton_clicked()
                                  "Análisis léxico exitoso. No se encontraron errores.");
     }
 
-    if(!this->listaErrores.isEmpty()) {
-        QMessageBox::critical(this, "Análisis finalizado",
-                              "Se detectaron " + QString::number(listaErrores.size()) + " errores.");
-    } else {
-        QMessageBox::information(this, "Análisis finalizado",
-                                 "Análisis léxico exitoso.");
+    auto nombreTipo = [](TipoToken t) -> QString {
+        switch(t) {
+        case HOSPITAL:             return "PALABRA_RESERVADA";
+        case PACIENTES:            return "PALABRA_RESERVADA";
+        case MEDICOS:              return "PALABRA_RESERVADA";
+        case CITAS:                return "PALABRA_RESERVADA";
+        case DIAGNOSTICOS:         return "PALABRA_RESERVADA";
+        case PACIENTE_ELEMENTO:    return "PALABRA_RESERVADA";
+        case MEDICO_ELEMENTO:      return "PALABRA_RESERVADA";
+        case CITA_ELEMENTO:        return "PALABRA_RESERVADA";
+        case DIAGNOSTICO_ELEMENTO: return "PALABRA_RESERVADA";
+        case ID_MEDICO:            return "IDENTIFICADOR";
+        case CADENA:               return "LITERAL_CADENA";
+        case NUMERO:               return "LITERAL_ENTERO";
+        case LLAVE_A:              return "LLAVE_ABRE";
+        case LLAVE_C:              return "LLAVE_CIERRA";
+        case CORCHETE_A:           return "CORCHETE_ABRE";
+        case CORCHETE_C:           return "CORCHETE_CIERRA";
+        case DOS_PUNTOS:           return "DOS_PUNTOS";
+        case COMA:                 return "COMA";
+        case PUNTO_COMA:           return "PUNTO_COMA";
+        case ERROR:                return "ERROR";
+        default:                   return "DESCONOCIDO";
+        }
+    };
+
+    ui->tablaTokens->setRowCount(0);
+    ui->tablaTokens->setColumnCount(5);
+    ui->tablaTokens->setHorizontalHeaderLabels({"#", "Lexema", "Tipo", "Línea", "Columna"});
+    ui->tablaTokens->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    for(int i = 0; i < this->tokensActuales.size(); i++) {
+        const Token &t = this->tokensActuales[i];
+        int row = ui->tablaTokens->rowCount();
+        ui->tablaTokens->insertRow(row);
+        ui->tablaTokens->setItem(row, 0, new QTableWidgetItem(QString::number(i + 1)));
+        ui->tablaTokens->setItem(row, 1, new QTableWidgetItem(t.lexema));
+        ui->tablaTokens->setItem(row, 2, new QTableWidgetItem(nombreTipo(t.tipo)));
+        ui->tablaTokens->setItem(row, 3, new QTableWidgetItem(QString::number(t.linea)));
+        ui->tablaTokens->setItem(row, 4, new QTableWidgetItem(QString::number(t.columna)));
+
+        if(t.tipo == ERROR) {
+            for(int col = 0; col < 5; col++) {
+                if(ui->tablaTokens->item(row, col))
+                    ui->tablaTokens->item(row, col)->setBackground(QColor("#5c1a1a"));
+            }
+        }
     }
+
+    ui->tablaErrores->setRowCount(0);
+    ui->tablaErrores->setColumnCount(6);
+    ui->tablaErrores->setHorizontalHeaderLabels({"No.", "Lexema", "Tipo", "Descripción", "Línea", "Columna"});
+    ui->tablaErrores->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    for(const ErrorLexico &e : this->listaErrores) {
+        int row = ui->tablaErrores->rowCount();
+        ui->tablaErrores->insertRow(row);
+        ui->tablaErrores->setItem(row, 0, new QTableWidgetItem(QString::number(e.no)));
+        ui->tablaErrores->setItem(row, 1, new QTableWidgetItem(e.lexema));
+        ui->tablaErrores->setItem(row, 2, new QTableWidgetItem(e.tipo));
+        ui->tablaErrores->setItem(row, 3, new QTableWidgetItem(e.descripcion));
+        ui->tablaErrores->setItem(row, 4, new QTableWidgetItem(QString::number(e.linea)));
+        ui->tablaErrores->setItem(row, 5, new QTableWidgetItem(QString::number(e.columna)));
+
+        QColor color = (e.gravedad == "CRÍTICO") ? QColor("#8e1515") : QColor("#5c1a1a");
+        for(int col = 0; col < 6; col++) {
+            if(ui->tablaErrores->item(row, col))
+                ui->tablaErrores->item(row, col)->setBackground(color);
+        }
+    }
+
 }
 
 
@@ -258,7 +323,6 @@ void MainWindow::on_btnReporteTokens_clicked()
         return;
     }
 
-    // Función helper para obtener el nombre del tipo de token
     auto nombreTipo = [](TipoToken t) -> QString {
         switch(t) {
         case HOSPITAL:             return "PALABRA_RESERVADA";
@@ -622,6 +686,8 @@ void MainWindow::on_btnAgendaCitas_clicked()
 void MainWindow::on_btnLimpiar_clicked()
 {
     ui->plainTextEdit->clear();
+    ui->tablaTokens->setRowCount(0);
+    ui->tablaErrores->setRowCount(0);
     this->tokensActuales.clear();
     QMessageBox::information(this, "Limpiar", "Pantalla y datos limpios.");
 }
@@ -874,3 +940,109 @@ void MainWindow::on_btnGenerarReporteGrap_clicked()
 }
 
 
+void MainWindow::llenarTablaTokens()
+{
+    auto nombreTipo = [](TipoToken t) -> QString {
+        switch(t) {
+        case HOSPITAL:             return "PALABRA_RESERVADA";
+        case PACIENTES:            return "PALABRA_RESERVADA";
+        case MEDICOS:              return "PALABRA_RESERVADA";
+        case CITAS:                return "PALABRA_RESERVADA";
+        case DIAGNOSTICOS:         return "PALABRA_RESERVADA";
+        case PACIENTE_ELEMENTO:    return "PALABRA_RESERVADA";
+        case MEDICO_ELEMENTO:      return "PALABRA_RESERVADA";
+        case CITA_ELEMENTO:        return "PALABRA_RESERVADA";
+        case DIAGNOSTICO_ELEMENTO: return "PALABRA_RESERVADA";
+        case ID_MEDICO:            return "IDENTIFICADOR";
+        case CADENA:               return "LITERAL_CADENA";
+        case NUMERO:               return "LITERAL_ENTERO";
+        case LLAVE_A:              return "LLAVE_ABRE";
+        case LLAVE_C:              return "LLAVE_CIERRA";
+        case CORCHETE_A:           return "CORCHETE_ABRE";
+        case CORCHETE_C:           return "CORCHETE_CIERRA";
+        case DOS_PUNTOS:           return "DOS_PUNTOS";
+        case COMA:                 return "COMA";
+        case PUNTO_COMA:           return "PUNTO_COMA";
+        case ERROR:                return "ERROR";
+        default:                   return "DESCONOCIDO";
+        }
+    };
+
+    ui->tablaTokens->setRowCount(0);
+    ui->tablaTokens->setColumnCount(5);
+    ui->tablaTokens->setHorizontalHeaderLabels({"#", "Lexema", "Tipo", "Línea", "Columna"});
+    ui->tablaTokens->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    for(int i = 0; i < this->tokensActuales.size(); i++) {
+        const Token &t = this->tokensActuales[i];
+        int row = ui->tablaTokens->rowCount();
+        ui->tablaTokens->insertRow(row);
+        ui->tablaTokens->setItem(row, 0, new QTableWidgetItem(QString::number(i + 1)));
+        ui->tablaTokens->setItem(row, 1, new QTableWidgetItem(t.lexema));
+        ui->tablaTokens->setItem(row, 2, new QTableWidgetItem(nombreTipo(t.tipo)));
+        ui->tablaTokens->setItem(row, 3, new QTableWidgetItem(QString::number(t.linea)));
+        ui->tablaTokens->setItem(row, 4, new QTableWidgetItem(QString::number(t.columna)));
+
+        if(t.tipo == ERROR) {
+            for(int col = 0; col < 5; col++) {
+                if(ui->tablaTokens->item(row, col))
+                    ui->tablaTokens->item(row, col)->setBackground(QColor("#5c1a1a"));
+            }
+        }
+    }
+}
+
+void MainWindow::llenarTablaErrores()
+{
+    ui->tablaErrores->setRowCount(0);
+    ui->tablaErrores->setColumnCount(6);
+    ui->tablaErrores->setHorizontalHeaderLabels({"No.", "Lexema", "Tipo", "Descripción", "Línea", "Columna"});
+    ui->tablaErrores->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    for(const ErrorLexico &e : this->listaErrores) {
+        int row = ui->tablaErrores->rowCount();
+        ui->tablaErrores->insertRow(row);
+        ui->tablaErrores->setItem(row, 0, new QTableWidgetItem(QString::number(e.no)));
+        ui->tablaErrores->setItem(row, 1, new QTableWidgetItem(e.lexema));
+        ui->tablaErrores->setItem(row, 2, new QTableWidgetItem(e.tipo));
+        ui->tablaErrores->setItem(row, 3, new QTableWidgetItem(e.descripcion));
+        ui->tablaErrores->setItem(row, 4, new QTableWidgetItem(QString::number(e.linea)));
+        ui->tablaErrores->setItem(row, 5, new QTableWidgetItem(QString::number(e.columna)));
+
+        QColor color = (e.gravedad == "CRÍTICO") ? QColor("#8e1515") : QColor("#5c1a1a");
+        for(int col = 0; col < 6; col++) {
+            if(ui->tablaErrores->item(row, col))
+                ui->tablaErrores->item(row, col)->setBackground(color);
+        }
+    }
+}
+
+void MainWindow::on_tablaerrores_cellActivated(int row, int column)
+{
+    Q_UNUSED(column);
+    if(row < 0 || row >= ui->tablaErrores->rowCount()) return;
+
+    QTableWidgetItem* itemLinea = ui->tablaErrores->item(row, 4);
+    QTableWidgetItem* itemLex   = ui->tablaErrores->item(row, 1);
+    if(!itemLinea || !itemLex) return;
+
+    QMessageBox::information(this, "Detalle de error",
+                             "Lexema: "  + itemLex->text() + "\n" +
+                                 "Línea: "   + itemLinea->text());
+}
+
+void MainWindow::on_tablaTokens_cellActivated(int row, int column)
+{
+    Q_UNUSED(column);
+    if(row < 0 || row >= ui->tablaTokens->rowCount()) return;
+
+    QTableWidgetItem* itemLex  = ui->tablaTokens->item(row, 1);
+    QTableWidgetItem* itemTipo = ui->tablaTokens->item(row, 2);
+    QTableWidgetItem* itemLin  = ui->tablaTokens->item(row, 3);
+    if(!itemLex || !itemTipo || !itemLin) return;
+
+    QMessageBox::information(this, "Detalle de token",
+                             "Lexema: " + itemLex->text()  + "\n" +
+                                 "Tipo: "   + itemTipo->text() + "\n" +
+                                 "Línea: "  + itemLin->text());
+}
