@@ -1,3 +1,0 @@
-C:\Qt\Tools\CMake_64\bin\cmake.exe -E rm -f CMakeFiles\LenguajesProyecto1.dir/objects.a
-C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\LenguajesProyecto1.dir/objects.a @CMakeFiles\LenguajesProyecto1.dir\objects1.rsp
-c:\msys64\mingw64\bin\g++.exe -g -mwindows -Wl,--whole-archive CMakeFiles\LenguajesProyecto1.dir/objects.a -Wl,--no-whole-archive -o LenguajesProyecto1.exe -Wl,--out-implib,libLenguajesProyecto1.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\LenguajesProyecto1.dir\linkLibs.rsp
